@@ -1,4 +1,5 @@
 import { ScheduleAppointmentUseCase } from 'src/appointment/application/schedule-appointment.use-case';
+import { MinimumNoticeException } from 'src/appointment/domain/exceptions/minimum-notice.exception';
 import { ScheduleConflictException } from 'src/appointment/domain/exceptions/schedule-conflict.exception';
 import { ScheduleAppointmentInput } from 'src/appointment/domain/interfaces/schedule-appointment-input.interface';
 import { InMemoryAppointmentRepository } from 'src/appointment/infra/persistence/repository/in-memory-appointment.repository';
@@ -6,6 +7,9 @@ import { InMemoryAppointmentRepository } from 'src/appointment/infra/persistence
 describe('ScheduleAppointmentUseCase', () => {
   let repository: InMemoryAppointmentRepository;
   let useCase: ScheduleAppointmentUseCase;
+
+  // Sexta-feira, 09/10/2026 às 09:00
+  const clock = { now: () => new Date('2026-10-09T09:00:00') };
 
   const input = (
     overrides: Partial<ScheduleAppointmentInput> = {},
@@ -19,7 +23,7 @@ describe('ScheduleAppointmentUseCase', () => {
 
   beforeEach(() => {
     repository = new InMemoryAppointmentRepository();
-    useCase = new ScheduleAppointmentUseCase(repository);
+    useCase = new ScheduleAppointmentUseCase(repository, clock);
   });
 
   it('agenda a consulta quando o profissional está livre', async () => {
@@ -71,5 +75,16 @@ describe('ScheduleAppointmentUseCase', () => {
     await expect(
       useCase.execute(input({ professionalId: 'prof-2', patientId: 'pac-2' })),
     ).resolves.toBeDefined();
+  });
+
+  it('recusa consulta no passado', async () => {
+    await expect(
+      useCase.execute(
+        input({
+          startsAt: new Date('2026-10-08T10:00:00'),
+          endsAt: new Date('2026-10-08T10:30:00'),
+        }),
+      ),
+    ).rejects.toThrow(MinimumNoticeException);
   });
 });
