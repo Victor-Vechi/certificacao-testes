@@ -3,6 +3,7 @@ import { Appointment } from 'src/appointment/domain/entities/appointment.entity'
 import { OutsideBusinessHoursException } from 'src/appointment/domain/exceptions/outside-business-hours.exception';
 import { MinimumNoticeException } from 'src/appointment/domain/exceptions/minimum-notice.exception';
 import { PatientAppointmentLimitException } from 'src/appointment/domain/exceptions/patient-appointment-limit.exception';
+import { SameDayAppointmentException } from 'src/appointment/domain/exceptions/same-day-appointment.exception';
 import { ScheduleConflictException } from 'src/appointment/domain/exceptions/schedule-conflict.exception';
 import { ScheduleAppointmentInput } from 'src/appointment/domain/interfaces/schedule-appointment-input.interface';
 import { InMemoryAppointmentRepository } from 'src/appointment/infra/persistence/repository/in-memory-appointment.repository';
@@ -228,5 +229,18 @@ describe('ScheduleAppointmentUseCase', () => {
     );
 
     await expect(useCase.execute(input())).resolves.toBeDefined();
+  });
+
+  it('recusa segunda consulta no mesmo dia com o mesmo profissional', async () => {
+    await useCase.execute(input());
+
+    await expect(
+      useCase.execute(
+        input({
+          startsAt: new Date('2026-10-12T15:00:00'),
+          endsAt: new Date('2026-10-12T15:30:00'),
+        }),
+      ),
+    ).rejects.toThrow(SameDayAppointmentException);
   });
 });
