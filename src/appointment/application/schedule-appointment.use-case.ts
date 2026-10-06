@@ -7,6 +7,7 @@ import { AppointmentStatus } from '../domain/enums/appointment-status.enum';
 import { MinimumNoticeException } from '../domain/exceptions/minimum-notice.exception';
 import { OutsideBusinessHoursException } from '../domain/exceptions/outside-business-hours.exception';
 import { PatientAppointmentLimitException } from '../domain/exceptions/patient-appointment-limit.exception';
+import { SameDayAppointmentException } from '../domain/exceptions/same-day-appointment.exception';
 import { ScheduleConflictException } from '../domain/exceptions/schedule-conflict.exception';
 import { ScheduleAppointmentInput } from '../domain/interfaces/schedule-appointment-input.interface';
 import { ScheduleAppointmentInterface } from '../domain/interfaces/schedule-appointment.interface';
@@ -58,6 +59,15 @@ export class ScheduleAppointmentUseCase
 
     if (openAppointments.length >= 2) {
       throw new PatientAppointmentLimitException();
+    }
+
+    if (
+      patientAppointments.some(
+        (a) =>
+          a.startsAt.toDateString() === appointment.startsAt.toDateString(),
+      )
+    ) {
+      throw new SameDayAppointmentException();
     }
 
     await this.repository.save(appointment);
