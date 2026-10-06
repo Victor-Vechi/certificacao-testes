@@ -18,7 +18,9 @@ export class ScheduleAppointmentUseCase {
     );
 
     if (
-      existing.some((a) => a.startsAt.getTime() === input.startsAt.getTime())
+      existing.some(
+        (a) => a.startsAt < input.endsAt && input.startsAt < a.endsAt,
+      )
     ) {
       throw new ScheduleConflictException();
     }
