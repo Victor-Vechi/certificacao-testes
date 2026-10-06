@@ -9,6 +9,8 @@ import { AppointmentNotFoundException } from 'src/appointment/domain/exceptions/
 import { CancellationDeadlineException } from 'src/appointment/domain/exceptions/cancellation-deadline.exception';
 import { MinimumNoticeException } from 'src/appointment/domain/exceptions/minimum-notice.exception';
 import { OutsideBusinessHoursException } from 'src/appointment/domain/exceptions/outside-business-hours.exception';
+import { PatientAppointmentLimitException } from 'src/appointment/domain/exceptions/patient-appointment-limit.exception';
+import { SameDayAppointmentException } from 'src/appointment/domain/exceptions/same-day-appointment.exception';
 import { ScheduleConflictException } from 'src/appointment/domain/exceptions/schedule-conflict.exception';
 import { CancelAppointmentInterface } from 'src/appointment/domain/interfaces/cancel-appointment.interface';
 import { ScheduleAppointmentInterface } from 'src/appointment/domain/interfaces/schedule-appointment.interface';
@@ -66,6 +68,8 @@ describe('AppointmentController', () => {
   it.each([
     ['antecedência mínima', new MinimumNoticeException()],
     ['horário comercial', new OutsideBusinessHoursException()],
+    ['limite por paciente', new PatientAppointmentLimitException()],
+    ['mesmo dia com o profissional', new SameDayAppointmentException()],
   ])('responde 422 quando viola a regra de %s', async (_, error) => {
     scheduleAppointment.execute.mockRejectedValue(error);
 
