@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { AppointmentStatus } from '../enums/appointment-status.enum';
 
-const MINIMUM_NOTICE_IN_MS = 2 * 60 * 60 * 1000;
+const HOUR_IN_MS = 60 * 60 * 1000;
+const MINIMUM_NOTICE_IN_MS = 2 * HOUR_IN_MS;
+const CANCELLATION_NOTICE_IN_MS = 24 * HOUR_IN_MS;
 const OPENING_HOUR = 8;
 const CLOSING_HOUR = 18;
 const SUNDAY = 0;
@@ -19,6 +21,14 @@ export class Appointment {
 
   cancel(): void {
     this.status = AppointmentStatus.CANCELLED;
+  }
+
+  isCancellable(): boolean {
+    return this.status === AppointmentStatus.SCHEDULED;
+  }
+
+  hasCancellationNotice(now: Date): boolean {
+    return this.startsAt.getTime() - now.getTime() >= CANCELLATION_NOTICE_IN_MS;
   }
 
   overlaps(other: Appointment): boolean {

@@ -2,7 +2,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { ClockInterface } from '../../shared/domain/clock/clock.interface';
 import { DependencyInjectionEnum } from '../../shared/domain/dependecy-injection/dependency-injection.enum';
 import { Appointment } from '../domain/entities/appointment.entity';
-import { AppointmentStatus } from '../domain/enums/appointment-status.enum';
 import { AppointmentNotCancellableException } from '../domain/exceptions/appointment-not-cancellable.exception';
 import { AppointmentNotFoundException } from '../domain/exceptions/appointment-not-found.exception';
 import { CancellationDeadlineException } from '../domain/exceptions/cancellation-deadline.exception';
@@ -26,15 +25,11 @@ export class CancelAppointmentUseCase implements CancelAppointmentInterface {
       throw new AppointmentNotFoundException();
     }
 
-    if (appointment.status !== AppointmentStatus.SCHEDULED) {
+    if (!appointment.isCancellable()) {
       throw new AppointmentNotCancellableException();
     }
 
-    const hoursUntilStart =
-      (appointment.startsAt.getTime() - this.clock.now().getTime()) /
-      (60 * 60 * 1000);
-
-    if (hoursUntilStart < 24) {
+    if (!appointment.hasCancellationNotice(this.clock.now())) {
       throw new CancellationDeadlineException();
     }
 
