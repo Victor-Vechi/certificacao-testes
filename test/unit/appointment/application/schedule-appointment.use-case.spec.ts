@@ -257,4 +257,19 @@ describe('ScheduleAppointmentUseCase', () => {
       ),
     ).resolves.toBeDefined();
   });
+
+  it('permite remarcar no mesmo dia após cancelar a consulta anterior', async () => {
+    const first = await useCase.execute(input());
+    first.cancel();
+    await repository.save(first);
+
+    await expect(
+      useCase.execute(
+        input({
+          startsAt: new Date('2026-10-12T15:00:00'),
+          endsAt: new Date('2026-10-12T15:30:00'),
+        }),
+      ),
+    ).resolves.toBeDefined();
+  });
 });
