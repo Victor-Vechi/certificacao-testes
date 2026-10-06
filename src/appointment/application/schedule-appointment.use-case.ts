@@ -45,7 +45,11 @@ export class ScheduleAppointmentUseCase
       appointment.professionalId,
     );
 
-    if (existing.some((other) => other.overlaps(appointment))) {
+    if (
+      existing.some(
+        (other) => other.isScheduled() && other.overlaps(appointment),
+      )
+    ) {
       throw new ScheduleConflictException();
     }
 
