@@ -6,4 +6,7 @@ export enum DependencyInjectionEnum {
   // Repositories:
   APPOINTMENT_REPOSITORY = 'AppointmentRepository',
 
+  // Shared:
+  CLOCK = 'Clock',
+
 }

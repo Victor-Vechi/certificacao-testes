@@ -1,7 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
+import type { ClockInterface } from '../../shared/domain/clock/clock.interface';
 import { DependencyInjectionEnum } from '../../shared/domain/dependecy-injection/dependency-injection.enum';
 import { Appointment } from '../domain/appointment.entity';
 import type { AppointmentRepository } from '../domain/appointment.repository';
+import { MinimumNoticeException } from '../domain/exceptions/minimum-notice.exception';
 import { ScheduleConflictException } from '../domain/exceptions/schedule-conflict.exception';
 import { ScheduleAppointmentInput } from '../domain/interfaces/schedule-appointment-input.interface';
 import { ScheduleAppointmentInterface } from '../domain/interfaces/schedule-appointment.interface';
@@ -13,9 +15,15 @@ export class ScheduleAppointmentUseCase
   constructor(
     @Inject(DependencyInjectionEnum.APPOINTMENT_REPOSITORY)
     private readonly repository: AppointmentRepository,
+    @Inject(DependencyInjectionEnum.CLOCK)
+    private readonly clock: ClockInterface,
   ) {}
 
   async execute(input: ScheduleAppointmentInput): Promise<Appointment> {
+    if (input.startsAt < this.clock.now()) {
+      throw new MinimumNoticeException();
+    }
+
     const existing = await this.repository.findByProfessional(
       input.professionalId,
     );
