@@ -1,5 +1,5 @@
 import { ScheduleAppointmentUseCase } from 'src/appointment/application/schedule-appointment.use-case';
-import { InMemoryAppointmentRepository } from 'src/appointment/infra/in-memory-appointment.repository';
+import { InMemoryAppointmentRepository } from 'src/appointment/infra/persistence/repository/in-memory-appointment.repository';
 
 describe('ScheduleAppointmentUseCase', () => {
   let repository: InMemoryAppointmentRepository;
