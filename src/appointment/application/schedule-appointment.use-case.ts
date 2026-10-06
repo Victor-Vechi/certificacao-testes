@@ -31,7 +31,10 @@ export class ScheduleAppointmentUseCase
 
     const weekDay = input.startsAt.getDay();
 
-    if (weekDay === 0 || weekDay === 6) {
+    const closingTime = new Date(input.startsAt);
+    closingTime.setHours(18, 0, 0, 0);
+
+    if (weekDay === 0 || weekDay === 6 || input.endsAt > closingTime) {
       throw new OutsideBusinessHoursException();
     }
 
