@@ -110,4 +110,15 @@ describe('ScheduleAppointmentUseCase', () => {
       ),
     ).rejects.toThrow(OutsideBusinessHoursException);
   });
+
+  it('recusa consulta que termina depois das 18h', async () => {
+    await expect(
+      useCase.execute(
+        input({
+          startsAt: new Date('2026-10-12T17:45:00'),
+          endsAt: new Date('2026-10-12T18:15:00'),
+        }),
+      ),
+    ).rejects.toThrow(OutsideBusinessHoursException);
+  });
 });
