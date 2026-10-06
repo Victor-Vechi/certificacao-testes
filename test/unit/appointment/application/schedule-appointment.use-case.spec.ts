@@ -87,4 +87,15 @@ describe('ScheduleAppointmentUseCase', () => {
       ),
     ).rejects.toThrow(MinimumNoticeException);
   });
+
+  it('recusa consulta com menos de 2h de antecedência', async () => {
+    await expect(
+      useCase.execute(
+        input({
+          startsAt: new Date('2026-10-09T10:30:00'),
+          endsAt: new Date('2026-10-09T11:00:00'),
+        }),
+      ),
+    ).rejects.toThrow(MinimumNoticeException);
+  });
 });
