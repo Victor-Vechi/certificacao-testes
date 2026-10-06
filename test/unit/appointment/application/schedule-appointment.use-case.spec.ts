@@ -83,6 +83,16 @@ describe('ScheduleAppointmentUseCase', () => {
     ).resolves.toBeDefined();
   });
 
+  it('permite agendar no horário de uma consulta cancelada', async () => {
+    const cancelled = await useCase.execute(input());
+    cancelled.cancel();
+    await repository.save(cancelled);
+
+    await expect(
+      useCase.execute(input({ patientId: 'pac-2' })),
+    ).resolves.toBeDefined();
+  });
+
   it('permite o mesmo horário para profissionais diferentes', async () => {
     await useCase.execute(input());
 
