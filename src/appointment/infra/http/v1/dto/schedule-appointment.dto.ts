@@ -3,15 +3,15 @@ import { IsISO8601, IsNotEmpty, IsString } from 'class-validator';
 export class ScheduleAppointmentDto {
   @IsString()
   @IsNotEmpty()
-  professionalId: string;
+  professionalId!: string;
 
   @IsString()
   @IsNotEmpty()
-  patientId: string;
+  patientId!: string;
 
   @IsISO8601()
-  startsAt: string;
+  startsAt!: string;
 
   @IsISO8601()
-  endsAt: string;
+  endsAt!: string;
 }
