@@ -3,7 +3,6 @@ import {
   ConflictException,
   Controller,
   Inject,
-  NotImplementedException,
   Param,
   Patch,
   Post,
@@ -54,6 +53,6 @@ export class AppointmentController {
 
   @Patch('/appointment/:id/cancel')
   cancel(@Param('id') id: string): Promise<Appointment> {
-    return Promise.reject(new NotImplementedException(id));
+    return this.cancelAppointment.execute({ appointmentId: id });
   }
 }
