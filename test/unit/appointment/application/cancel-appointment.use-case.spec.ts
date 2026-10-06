@@ -1,5 +1,6 @@
 import { CancelAppointmentUseCase } from 'src/appointment/application/cancel-appointment.use-case';
 import { Appointment } from 'src/appointment/domain/entities/appointment.entity';
+import { CancellationDeadlineException } from 'src/appointment/domain/exceptions/cancellation-deadline.exception';
 import { AppointmentStatus } from 'src/appointment/domain/enums/appointment-status.enum';
 import { InMemoryAppointmentRepository } from 'src/appointment/infra/persistence/repository/in-memory-appointment.repository';
 
@@ -31,5 +32,14 @@ describe('CancelAppointmentUseCase', () => {
     await useCase.execute({ appointmentId: appointment.id });
 
     expect(appointment.status).toBe(AppointmentStatus.CANCELLED);
+  });
+
+  it('recusa cancelamento com menos de 24h de antecedência', async () => {
+    now = new Date('2026-10-11T11:00:00'); // 23h antes
+
+    await expect(
+      useCase.execute({ appointmentId: appointment.id }),
+    ).rejects.toThrow(CancellationDeadlineException);
+    expect(appointment.status).toBe(AppointmentStatus.SCHEDULED);
   });
 });
