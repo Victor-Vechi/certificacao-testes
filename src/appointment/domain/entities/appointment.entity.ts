@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { AppointmentStatus } from '../enums/appointment-status.enum';
 
 const MINIMUM_NOTICE_IN_MS = 2 * 60 * 60 * 1000;
 const OPENING_HOUR = 8;
@@ -13,7 +14,12 @@ export class Appointment {
     readonly startsAt: Date,
     readonly endsAt: Date,
     readonly id: string = randomUUID(),
+    public status: AppointmentStatus = AppointmentStatus.SCHEDULED,
   ) {}
+
+  cancel(): void {
+    this.status = AppointmentStatus.CANCELLED;
+  }
 
   overlaps(other: Appointment): boolean {
     return this.startsAt < other.endsAt && other.startsAt < this.endsAt;

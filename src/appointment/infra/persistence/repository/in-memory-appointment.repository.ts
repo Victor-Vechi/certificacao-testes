@@ -17,7 +17,14 @@ export class InMemoryAppointmentRepository implements AppointmentRepository {
   }
 
   save(appointment: Appointment): Promise<void> {
-    this.appointments.push(appointment);
+    const index = this.appointments.findIndex((a) => a.id === appointment.id);
+
+    if (index >= 0) {
+      this.appointments[index] = appointment;
+    } else {
+      this.appointments.push(appointment);
+    }
+
     return Promise.resolve();
   }
 }

@@ -16,8 +16,13 @@ export class CancelAppointmentUseCase implements CancelAppointmentInterface {
   ) {}
 
   async execute(input: CancelAppointmentInput): Promise<Appointment> {
-    const appointment = await this.repository.findById(input.appointmentId);
+    const appointment = (await this.repository.findById(
+      input.appointmentId,
+    )) as Appointment;
 
-    return appointment as Appointment;
+    appointment.cancel();
+    await this.repository.save(appointment);
+
+    return appointment;
   }
 }
