@@ -1,4 +1,4 @@
-import { Appointment } from './appointment.entity';
+import { Appointment } from '../entities/appointment.entity';
 
 export interface AppointmentRepository {
   findByProfessional(professionalId: string): Promise<Appointment[]>;

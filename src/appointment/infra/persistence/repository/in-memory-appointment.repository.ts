@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Appointment } from '../../../domain/appointment.entity';
-import { AppointmentRepository } from '../../../domain/appointment.repository';
+import { Appointment } from '../../../domain/entities/appointment.entity';
+import { AppointmentRepository } from '../../../domain/repositories/appointment.repository';
 
 @Injectable()
 export class InMemoryAppointmentRepository implements AppointmentRepository {

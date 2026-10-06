@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { ClockInterface } from '../../shared/domain/clock/clock.interface';
 import { DependencyInjectionEnum } from '../../shared/domain/dependecy-injection/dependency-injection.enum';
-import { Appointment } from '../domain/appointment.entity';
-import type { AppointmentRepository } from '../domain/appointment.repository';
+import { Appointment } from '../domain/entities/appointment.entity';
+import type { AppointmentRepository } from '../domain/repositories/appointment.repository';
 import { MinimumNoticeException } from '../domain/exceptions/minimum-notice.exception';
 import { OutsideBusinessHoursException } from '../domain/exceptions/outside-business-hours.exception';
 import { ScheduleConflictException } from '../domain/exceptions/schedule-conflict.exception';

@@ -7,7 +7,7 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { DependencyInjectionEnum } from '../../../../../shared/domain/dependecy-injection/dependency-injection.enum';
-import { Appointment } from '../../../../domain/appointment.entity';
+import { Appointment } from '../../../../domain/entities/appointment.entity';
 import { MinimumNoticeException } from '../../../../domain/exceptions/minimum-notice.exception';
 import { OutsideBusinessHoursException } from '../../../../domain/exceptions/outside-business-hours.exception';
 import { ScheduleConflictException } from '../../../../domain/exceptions/schedule-conflict.exception';
