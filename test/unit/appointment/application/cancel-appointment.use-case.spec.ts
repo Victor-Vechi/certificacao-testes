@@ -52,4 +52,21 @@ describe('CancelAppointmentUseCase', () => {
       useCase.execute({ appointmentId: appointment.id }),
     ).rejects.toThrow(AppointmentNotCancellableException);
   });
+
+  it('recusa cancelar consulta já realizada', async () => {
+    now = new Date('2026-10-13T09:00:00'); // dia seguinte à consulta
+    const completed = new Appointment(
+      'prof-1',
+      'pac-1',
+      new Date('2026-10-12T14:00:00'),
+      new Date('2026-10-12T14:30:00'),
+      'consulta-realizada',
+      AppointmentStatus.COMPLETED,
+    );
+    await repository.save(completed);
+
+    await expect(
+      useCase.execute({ appointmentId: completed.id }),
+    ).rejects.toThrow(AppointmentNotCancellableException);
+  });
 });
