@@ -1,6 +1,7 @@
 import { ScheduleAppointmentUseCase } from 'src/appointment/application/schedule-appointment.use-case';
 import { OutsideBusinessHoursException } from 'src/appointment/domain/exceptions/outside-business-hours.exception';
 import { MinimumNoticeException } from 'src/appointment/domain/exceptions/minimum-notice.exception';
+import { PatientAppointmentLimitException } from 'src/appointment/domain/exceptions/patient-appointment-limit.exception';
 import { ScheduleConflictException } from 'src/appointment/domain/exceptions/schedule-conflict.exception';
 import { ScheduleAppointmentInput } from 'src/appointment/domain/interfaces/schedule-appointment-input.interface';
 import { InMemoryAppointmentRepository } from 'src/appointment/infra/persistence/repository/in-memory-appointment.repository';
@@ -165,5 +166,24 @@ describe('ScheduleAppointmentUseCase', () => {
         input({ startsAt: new Date(startsAt), endsAt: new Date(endsAt) }),
       ),
     ).resolves.toBeDefined();
+  });
+
+  it('recusa a 3ª consulta futura em aberto do mesmo paciente', async () => {
+    await useCase.execute(input());
+    await useCase.execute(
+      input({
+        startsAt: new Date('2026-10-13T10:00:00'),
+        endsAt: new Date('2026-10-13T10:30:00'),
+      }),
+    );
+
+    await expect(
+      useCase.execute(
+        input({
+          startsAt: new Date('2026-10-14T10:00:00'),
+          endsAt: new Date('2026-10-14T10:30:00'),
+        }),
+      ),
+    ).rejects.toThrow(PatientAppointmentLimitException);
   });
 });
