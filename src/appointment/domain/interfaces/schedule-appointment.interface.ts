@@ -1,4 +1,4 @@
-import { Appointment } from '../appointment.entity';
+import { Appointment } from '../entities/appointment.entity';
 import { ScheduleAppointmentInput } from './schedule-appointment-input.interface';
 
 export interface ScheduleAppointmentInterface {

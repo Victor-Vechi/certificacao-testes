@@ -1,0 +1,377 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-10-06T00:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v11.0.0",
+  "resources": [
+    {
+      "_id": "wrk_ca847e5e1fdc41c6a9b89f1ae835553f",
+      "_type": "workspace",
+      "parentId": null,
+      "name": "Agenda de Consultas",
+      "description": "Requests da API de agenda de consultas. As datas são calculadas no momento da execução (script de pré-request). O repositório é em memória: reinicie a aplicação para começar do zero e execute as pastas na ordem (Run Collection).",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_e5bf92a80b774d3b84b8a1582b775ae0",
+      "_type": "environment",
+      "parentId": "wrk_ca847e5e1fdc41c6a9b89f1ae835553f",
+      "name": "Base Environment",
+      "data": {
+        "baseUrl": "http://localhost:3000",
+        "appointmentId": ""
+      }
+    },
+    {
+      "_id": "fld_308585e3520d42c69bd3d554f0defbf5",
+      "_type": "request_group",
+      "parentId": "wrk_ca847e5e1fdc41c6a9b89f1ae835553f",
+      "name": "1. Agendamento",
+      "description": "",
+      "environment": {},
+      "metaSortKey": 1
+    },
+    {
+      "_id": "req_2ccde8fd16d74ec99810bcfab6043d10",
+      "_type": "request",
+      "parentId": "fld_308585e3520d42c69bd3d554f0defbf5",
+      "name": "Agendar consulta (201)",
+      "description": "Agenda uma consulta válida e guarda o id em appointmentId.",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/appointment",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"professionalId\": \"prof-1\",\n  \"patientId\": \"pac-1\",\n  \"startsAt\": \"{{ _.dia1_10h00 }}\",\n  \"endsAt\": \"{{ _.dia1_10h30 }}\"\n}"
+      },
+      "metaSortKey": 2,
+      "preRequestScript": "// Calcula as datas a partir de \"agora\", para a collection nunca ficar com datas vencidas.\n// Os horários são enviados no fuso local de quem executa (ex.: -03:00).\nconst pad = (n) => String(n).padStart(2, '0');\nconst offset = (date) => {\n  const minutes = -date.getTimezoneOffset();\n  const sign = minutes >= 0 ? '+' : '-';\n  const abs = Math.abs(minutes);\n  return `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;\n};\nconst iso = (day, hour, minute) => {\n  const d = new Date(day);\n  d.setHours(hour, minute, 0, 0);\n  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(hour)}:${pad(minute)}:00${offset(d)}`;\n};\nconst isWeekday = (d) => d.getDay() !== 0 && d.getDay() !== 6;\nconst nextWeekday = (from) => {\n  const d = new Date(from);\n  do { d.setDate(d.getDate() + 1); } while (!isWeekday(d));\n  return d;\n};\n\nconst now = new Date();\n// Pelo menos 2 dias à frente, para também permitir o cancelamento (24h).\nconst tomorrow = new Date(now);\ntomorrow.setDate(tomorrow.getDate() + 1);\nconst dia1 = nextWeekday(tomorrow);\nconst dia2 = nextWeekday(dia1);\nconst dia3 = nextWeekday(dia2);\nconst sabado = new Date(now);\ndo { sabado.setDate(sabado.getDate() + 1); } while (sabado.getDay() !== 6);\nconst daqui1h = new Date(now.getTime() + 60 * 60 * 1000);\nconst daqui1h30 = new Date(now.getTime() + 90 * 60 * 1000);\n\nconst datas = {\n  dia1_10h00: iso(dia1, 10, 0),\n  dia1_10h30: iso(dia1, 10, 30),\n  dia1_15h00: iso(dia1, 15, 0),\n  dia1_15h30: iso(dia1, 15, 30),\n  dia1_17h45: iso(dia1, 17, 45),\n  dia1_18h15: iso(dia1, 18, 15),\n  dia2_10h00: iso(dia2, 10, 0),\n  dia2_10h30: iso(dia2, 10, 30),\n  dia3_10h00: iso(dia3, 10, 0),\n  dia3_10h30: iso(dia3, 10, 30),\n  sabado_10h00: iso(sabado, 10, 0),\n  sabado_10h30: iso(sabado, 10, 30),\n  daqui_1h: iso(daqui1h, daqui1h.getHours(), daqui1h.getMinutes()),\n  daqui_1h30: iso(daqui1h30, daqui1h30.getHours(), daqui1h30.getMinutes()),\n};\nObject.entries(datas).forEach(([chave, valor]) => insomnia.environment.set(chave, valor));",
+      "afterResponseScript": "insomnia.test('responde 201', () => {\n  insomnia.expect(insomnia.response.code).to.equal(201);\n});\ninsomnia.environment.set('appointmentId', insomnia.response.json().id);"
+    },
+    {
+      "_id": "req_76da753448574833a8bf6e8cccf7a8b5",
+      "_type": "request",
+      "parentId": "fld_308585e3520d42c69bd3d554f0defbf5",
+      "name": "Payload inválido (400)",
+      "description": "Campos vazios e datas fora do padrão ISO 8601.",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/appointment",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"professionalId\": \"\",\n  \"startsAt\": \"amanhã\"\n}"
+      },
+      "metaSortKey": 3,
+      "preRequestScript": "// Calcula as datas a partir de \"agora\", para a collection nunca ficar com datas vencidas.\n// Os horários são enviados no fuso local de quem executa (ex.: -03:00).\nconst pad = (n) => String(n).padStart(2, '0');\nconst offset = (date) => {\n  const minutes = -date.getTimezoneOffset();\n  const sign = minutes >= 0 ? '+' : '-';\n  const abs = Math.abs(minutes);\n  return `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;\n};\nconst iso = (day, hour, minute) => {\n  const d = new Date(day);\n  d.setHours(hour, minute, 0, 0);\n  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(hour)}:${pad(minute)}:00${offset(d)}`;\n};\nconst isWeekday = (d) => d.getDay() !== 0 && d.getDay() !== 6;\nconst nextWeekday = (from) => {\n  const d = new Date(from);\n  do { d.setDate(d.getDate() + 1); } while (!isWeekday(d));\n  return d;\n};\n\nconst now = new Date();\n// Pelo menos 2 dias à frente, para também permitir o cancelamento (24h).\nconst tomorrow = new Date(now);\ntomorrow.setDate(tomorrow.getDate() + 1);\nconst dia1 = nextWeekday(tomorrow);\nconst dia2 = nextWeekday(dia1);\nconst dia3 = nextWeekday(dia2);\nconst sabado = new Date(now);\ndo { sabado.setDate(sabado.getDate() + 1); } while (sabado.getDay() !== 6);\nconst daqui1h = new Date(now.getTime() + 60 * 60 * 1000);\nconst daqui1h30 = new Date(now.getTime() + 90 * 60 * 1000);\n\nconst datas = {\n  dia1_10h00: iso(dia1, 10, 0),\n  dia1_10h30: iso(dia1, 10, 30),\n  dia1_15h00: iso(dia1, 15, 0),\n  dia1_15h30: iso(dia1, 15, 30),\n  dia1_17h45: iso(dia1, 17, 45),\n  dia1_18h15: iso(dia1, 18, 15),\n  dia2_10h00: iso(dia2, 10, 0),\n  dia2_10h30: iso(dia2, 10, 30),\n  dia3_10h00: iso(dia3, 10, 0),\n  dia3_10h30: iso(dia3, 10, 30),\n  sabado_10h00: iso(sabado, 10, 0),\n  sabado_10h30: iso(sabado, 10, 30),\n  daqui_1h: iso(daqui1h, daqui1h.getHours(), daqui1h.getMinutes()),\n  daqui_1h30: iso(daqui1h30, daqui1h30.getHours(), daqui1h30.getMinutes()),\n};\nObject.entries(datas).forEach(([chave, valor]) => insomnia.environment.set(chave, valor));",
+      "afterResponseScript": "insomnia.test('responde 400', () => {\n  insomnia.expect(insomnia.response.code).to.equal(400);\n});"
+    },
+    {
+      "_id": "fld_e5d074e9b98344a294a23f5f207c72ee",
+      "_type": "request_group",
+      "parentId": "wrk_ca847e5e1fdc41c6a9b89f1ae835553f",
+      "name": "2. Regra 1 - Conflito de horário",
+      "description": "",
+      "environment": {},
+      "metaSortKey": 4
+    },
+    {
+      "_id": "req_35eea664cce84a9997c2c812cda93c98",
+      "_type": "request",
+      "parentId": "fld_e5d074e9b98344a294a23f5f207c72ee",
+      "name": "Mesmo horário, mesmo profissional (409)",
+      "description": "Outro paciente no mesmo horário do prof-1.",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/appointment",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"professionalId\": \"prof-1\",\n  \"patientId\": \"pac-2\",\n  \"startsAt\": \"{{ _.dia1_10h00 }}\",\n  \"endsAt\": \"{{ _.dia1_10h30 }}\"\n}"
+      },
+      "metaSortKey": 5,
+      "preRequestScript": "// Calcula as datas a partir de \"agora\", para a collection nunca ficar com datas vencidas.\n// Os horários são enviados no fuso local de quem executa (ex.: -03:00).\nconst pad = (n) => String(n).padStart(2, '0');\nconst offset = (date) => {\n  const minutes = -date.getTimezoneOffset();\n  const sign = minutes >= 0 ? '+' : '-';\n  const abs = Math.abs(minutes);\n  return `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;\n};\nconst iso = (day, hour, minute) => {\n  const d = new Date(day);\n  d.setHours(hour, minute, 0, 0);\n  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(hour)}:${pad(minute)}:00${offset(d)}`;\n};\nconst isWeekday = (d) => d.getDay() !== 0 && d.getDay() !== 6;\nconst nextWeekday = (from) => {\n  const d = new Date(from);\n  do { d.setDate(d.getDate() + 1); } while (!isWeekday(d));\n  return d;\n};\n\nconst now = new Date();\n// Pelo menos 2 dias à frente, para também permitir o cancelamento (24h).\nconst tomorrow = new Date(now);\ntomorrow.setDate(tomorrow.getDate() + 1);\nconst dia1 = nextWeekday(tomorrow);\nconst dia2 = nextWeekday(dia1);\nconst dia3 = nextWeekday(dia2);\nconst sabado = new Date(now);\ndo { sabado.setDate(sabado.getDate() + 1); } while (sabado.getDay() !== 6);\nconst daqui1h = new Date(now.getTime() + 60 * 60 * 1000);\nconst daqui1h30 = new Date(now.getTime() + 90 * 60 * 1000);\n\nconst datas = {\n  dia1_10h00: iso(dia1, 10, 0),\n  dia1_10h30: iso(dia1, 10, 30),\n  dia1_15h00: iso(dia1, 15, 0),\n  dia1_15h30: iso(dia1, 15, 30),\n  dia1_17h45: iso(dia1, 17, 45),\n  dia1_18h15: iso(dia1, 18, 15),\n  dia2_10h00: iso(dia2, 10, 0),\n  dia2_10h30: iso(dia2, 10, 30),\n  dia3_10h00: iso(dia3, 10, 0),\n  dia3_10h30: iso(dia3, 10, 30),\n  sabado_10h00: iso(sabado, 10, 0),\n  sabado_10h30: iso(sabado, 10, 30),\n  daqui_1h: iso(daqui1h, daqui1h.getHours(), daqui1h.getMinutes()),\n  daqui_1h30: iso(daqui1h30, daqui1h30.getHours(), daqui1h30.getMinutes()),\n};\nObject.entries(datas).forEach(([chave, valor]) => insomnia.environment.set(chave, valor));",
+      "afterResponseScript": "insomnia.test('responde 409', () => {\n  insomnia.expect(insomnia.response.code).to.equal(409);\n});"
+    },
+    {
+      "_id": "req_56fa73b747674637b48e6f5f3439f466",
+      "_type": "request",
+      "parentId": "fld_e5d074e9b98344a294a23f5f207c72ee",
+      "name": "Mesmo horário, outro profissional (201)",
+      "description": "O conflito vale só para o mesmo profissional.",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/appointment",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"professionalId\": \"prof-2\",\n  \"patientId\": \"pac-2\",\n  \"startsAt\": \"{{ _.dia1_10h00 }}\",\n  \"endsAt\": \"{{ _.dia1_10h30 }}\"\n}"
+      },
+      "metaSortKey": 6,
+      "preRequestScript": "// Calcula as datas a partir de \"agora\", para a collection nunca ficar com datas vencidas.\n// Os horários são enviados no fuso local de quem executa (ex.: -03:00).\nconst pad = (n) => String(n).padStart(2, '0');\nconst offset = (date) => {\n  const minutes = -date.getTimezoneOffset();\n  const sign = minutes >= 0 ? '+' : '-';\n  const abs = Math.abs(minutes);\n  return `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;\n};\nconst iso = (day, hour, minute) => {\n  const d = new Date(day);\n  d.setHours(hour, minute, 0, 0);\n  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(hour)}:${pad(minute)}:00${offset(d)}`;\n};\nconst isWeekday = (d) => d.getDay() !== 0 && d.getDay() !== 6;\nconst nextWeekday = (from) => {\n  const d = new Date(from);\n  do { d.setDate(d.getDate() + 1); } while (!isWeekday(d));\n  return d;\n};\n\nconst now = new Date();\n// Pelo menos 2 dias à frente, para também permitir o cancelamento (24h).\nconst tomorrow = new Date(now);\ntomorrow.setDate(tomorrow.getDate() + 1);\nconst dia1 = nextWeekday(tomorrow);\nconst dia2 = nextWeekday(dia1);\nconst dia3 = nextWeekday(dia2);\nconst sabado = new Date(now);\ndo { sabado.setDate(sabado.getDate() + 1); } while (sabado.getDay() !== 6);\nconst daqui1h = new Date(now.getTime() + 60 * 60 * 1000);\nconst daqui1h30 = new Date(now.getTime() + 90 * 60 * 1000);\n\nconst datas = {\n  dia1_10h00: iso(dia1, 10, 0),\n  dia1_10h30: iso(dia1, 10, 30),\n  dia1_15h00: iso(dia1, 15, 0),\n  dia1_15h30: iso(dia1, 15, 30),\n  dia1_17h45: iso(dia1, 17, 45),\n  dia1_18h15: iso(dia1, 18, 15),\n  dia2_10h00: iso(dia2, 10, 0),\n  dia2_10h30: iso(dia2, 10, 30),\n  dia3_10h00: iso(dia3, 10, 0),\n  dia3_10h30: iso(dia3, 10, 30),\n  sabado_10h00: iso(sabado, 10, 0),\n  sabado_10h30: iso(sabado, 10, 30),\n  daqui_1h: iso(daqui1h, daqui1h.getHours(), daqui1h.getMinutes()),\n  daqui_1h30: iso(daqui1h30, daqui1h30.getHours(), daqui1h30.getMinutes()),\n};\nObject.entries(datas).forEach(([chave, valor]) => insomnia.environment.set(chave, valor));",
+      "afterResponseScript": "insomnia.test('responde 201', () => {\n  insomnia.expect(insomnia.response.code).to.equal(201);\n});"
+    },
+    {
+      "_id": "fld_3078070f38cb45e0b49a6453ecd689c0",
+      "_type": "request_group",
+      "parentId": "wrk_ca847e5e1fdc41c6a9b89f1ae835553f",
+      "name": "3. Regra 2 - Antecedência e horário comercial",
+      "description": "",
+      "environment": {},
+      "metaSortKey": 7
+    },
+    {
+      "_id": "req_f9d3dd09616d4e99b431532bbf9e0132",
+      "_type": "request",
+      "parentId": "fld_3078070f38cb45e0b49a6453ecd689c0",
+      "name": "Menos de 2h de antecedência (422)",
+      "description": "Consulta começando daqui a 1h.",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/appointment",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"professionalId\": \"prof-3\",\n  \"patientId\": \"pac-3\",\n  \"startsAt\": \"{{ _.daqui_1h }}\",\n  \"endsAt\": \"{{ _.daqui_1h30 }}\"\n}"
+      },
+      "metaSortKey": 8,
+      "preRequestScript": "// Calcula as datas a partir de \"agora\", para a collection nunca ficar com datas vencidas.\n// Os horários são enviados no fuso local de quem executa (ex.: -03:00).\nconst pad = (n) => String(n).padStart(2, '0');\nconst offset = (date) => {\n  const minutes = -date.getTimezoneOffset();\n  const sign = minutes >= 0 ? '+' : '-';\n  const abs = Math.abs(minutes);\n  return `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;\n};\nconst iso = (day, hour, minute) => {\n  const d = new Date(day);\n  d.setHours(hour, minute, 0, 0);\n  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(hour)}:${pad(minute)}:00${offset(d)}`;\n};\nconst isWeekday = (d) => d.getDay() !== 0 && d.getDay() !== 6;\nconst nextWeekday = (from) => {\n  const d = new Date(from);\n  do { d.setDate(d.getDate() + 1); } while (!isWeekday(d));\n  return d;\n};\n\nconst now = new Date();\n// Pelo menos 2 dias à frente, para também permitir o cancelamento (24h).\nconst tomorrow = new Date(now);\ntomorrow.setDate(tomorrow.getDate() + 1);\nconst dia1 = nextWeekday(tomorrow);\nconst dia2 = nextWeekday(dia1);\nconst dia3 = nextWeekday(dia2);\nconst sabado = new Date(now);\ndo { sabado.setDate(sabado.getDate() + 1); } while (sabado.getDay() !== 6);\nconst daqui1h = new Date(now.getTime() + 60 * 60 * 1000);\nconst daqui1h30 = new Date(now.getTime() + 90 * 60 * 1000);\n\nconst datas = {\n  dia1_10h00: iso(dia1, 10, 0),\n  dia1_10h30: iso(dia1, 10, 30),\n  dia1_15h00: iso(dia1, 15, 0),\n  dia1_15h30: iso(dia1, 15, 30),\n  dia1_17h45: iso(dia1, 17, 45),\n  dia1_18h15: iso(dia1, 18, 15),\n  dia2_10h00: iso(dia2, 10, 0),\n  dia2_10h30: iso(dia2, 10, 30),\n  dia3_10h00: iso(dia3, 10, 0),\n  dia3_10h30: iso(dia3, 10, 30),\n  sabado_10h00: iso(sabado, 10, 0),\n  sabado_10h30: iso(sabado, 10, 30),\n  daqui_1h: iso(daqui1h, daqui1h.getHours(), daqui1h.getMinutes()),\n  daqui_1h30: iso(daqui1h30, daqui1h30.getHours(), daqui1h30.getMinutes()),\n};\nObject.entries(datas).forEach(([chave, valor]) => insomnia.environment.set(chave, valor));",
+      "afterResponseScript": "insomnia.test('responde 422', () => {\n  insomnia.expect(insomnia.response.code).to.equal(422);\n});"
+    },
+    {
+      "_id": "req_7249292af354423ab649f4d2b37f0f79",
+      "_type": "request",
+      "parentId": "fld_3078070f38cb45e0b49a6453ecd689c0",
+      "name": "Fim de semana (422)",
+      "description": "Consulta no próximo sábado.",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/appointment",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"professionalId\": \"prof-3\",\n  \"patientId\": \"pac-3\",\n  \"startsAt\": \"{{ _.sabado_10h00 }}\",\n  \"endsAt\": \"{{ _.sabado_10h30 }}\"\n}"
+      },
+      "metaSortKey": 9,
+      "preRequestScript": "// Calcula as datas a partir de \"agora\", para a collection nunca ficar com datas vencidas.\n// Os horários são enviados no fuso local de quem executa (ex.: -03:00).\nconst pad = (n) => String(n).padStart(2, '0');\nconst offset = (date) => {\n  const minutes = -date.getTimezoneOffset();\n  const sign = minutes >= 0 ? '+' : '-';\n  const abs = Math.abs(minutes);\n  return `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;\n};\nconst iso = (day, hour, minute) => {\n  const d = new Date(day);\n  d.setHours(hour, minute, 0, 0);\n  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(hour)}:${pad(minute)}:00${offset(d)}`;\n};\nconst isWeekday = (d) => d.getDay() !== 0 && d.getDay() !== 6;\nconst nextWeekday = (from) => {\n  const d = new Date(from);\n  do { d.setDate(d.getDate() + 1); } while (!isWeekday(d));\n  return d;\n};\n\nconst now = new Date();\n// Pelo menos 2 dias à frente, para também permitir o cancelamento (24h).\nconst tomorrow = new Date(now);\ntomorrow.setDate(tomorrow.getDate() + 1);\nconst dia1 = nextWeekday(tomorrow);\nconst dia2 = nextWeekday(dia1);\nconst dia3 = nextWeekday(dia2);\nconst sabado = new Date(now);\ndo { sabado.setDate(sabado.getDate() + 1); } while (sabado.getDay() !== 6);\nconst daqui1h = new Date(now.getTime() + 60 * 60 * 1000);\nconst daqui1h30 = new Date(now.getTime() + 90 * 60 * 1000);\n\nconst datas = {\n  dia1_10h00: iso(dia1, 10, 0),\n  dia1_10h30: iso(dia1, 10, 30),\n  dia1_15h00: iso(dia1, 15, 0),\n  dia1_15h30: iso(dia1, 15, 30),\n  dia1_17h45: iso(dia1, 17, 45),\n  dia1_18h15: iso(dia1, 18, 15),\n  dia2_10h00: iso(dia2, 10, 0),\n  dia2_10h30: iso(dia2, 10, 30),\n  dia3_10h00: iso(dia3, 10, 0),\n  dia3_10h30: iso(dia3, 10, 30),\n  sabado_10h00: iso(sabado, 10, 0),\n  sabado_10h30: iso(sabado, 10, 30),\n  daqui_1h: iso(daqui1h, daqui1h.getHours(), daqui1h.getMinutes()),\n  daqui_1h30: iso(daqui1h30, daqui1h30.getHours(), daqui1h30.getMinutes()),\n};\nObject.entries(datas).forEach(([chave, valor]) => insomnia.environment.set(chave, valor));",
+      "afterResponseScript": "insomnia.test('responde 422', () => {\n  insomnia.expect(insomnia.response.code).to.equal(422);\n});"
+    },
+    {
+      "_id": "req_18e4f086a948478db7d864b5d5b008fc",
+      "_type": "request",
+      "parentId": "fld_3078070f38cb45e0b49a6453ecd689c0",
+      "name": "Termina depois das 18h (422)",
+      "description": "Consulta das 17:45 às 18:15.",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/appointment",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"professionalId\": \"prof-3\",\n  \"patientId\": \"pac-3\",\n  \"startsAt\": \"{{ _.dia1_17h45 }}\",\n  \"endsAt\": \"{{ _.dia1_18h15 }}\"\n}"
+      },
+      "metaSortKey": 10,
+      "preRequestScript": "// Calcula as datas a partir de \"agora\", para a collection nunca ficar com datas vencidas.\n// Os horários são enviados no fuso local de quem executa (ex.: -03:00).\nconst pad = (n) => String(n).padStart(2, '0');\nconst offset = (date) => {\n  const minutes = -date.getTimezoneOffset();\n  const sign = minutes >= 0 ? '+' : '-';\n  const abs = Math.abs(minutes);\n  return `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;\n};\nconst iso = (day, hour, minute) => {\n  const d = new Date(day);\n  d.setHours(hour, minute, 0, 0);\n  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(hour)}:${pad(minute)}:00${offset(d)}`;\n};\nconst isWeekday = (d) => d.getDay() !== 0 && d.getDay() !== 6;\nconst nextWeekday = (from) => {\n  const d = new Date(from);\n  do { d.setDate(d.getDate() + 1); } while (!isWeekday(d));\n  return d;\n};\n\nconst now = new Date();\n// Pelo menos 2 dias à frente, para também permitir o cancelamento (24h).\nconst tomorrow = new Date(now);\ntomorrow.setDate(tomorrow.getDate() + 1);\nconst dia1 = nextWeekday(tomorrow);\nconst dia2 = nextWeekday(dia1);\nconst dia3 = nextWeekday(dia2);\nconst sabado = new Date(now);\ndo { sabado.setDate(sabado.getDate() + 1); } while (sabado.getDay() !== 6);\nconst daqui1h = new Date(now.getTime() + 60 * 60 * 1000);\nconst daqui1h30 = new Date(now.getTime() + 90 * 60 * 1000);\n\nconst datas = {\n  dia1_10h00: iso(dia1, 10, 0),\n  dia1_10h30: iso(dia1, 10, 30),\n  dia1_15h00: iso(dia1, 15, 0),\n  dia1_15h30: iso(dia1, 15, 30),\n  dia1_17h45: iso(dia1, 17, 45),\n  dia1_18h15: iso(dia1, 18, 15),\n  dia2_10h00: iso(dia2, 10, 0),\n  dia2_10h30: iso(dia2, 10, 30),\n  dia3_10h00: iso(dia3, 10, 0),\n  dia3_10h30: iso(dia3, 10, 30),\n  sabado_10h00: iso(sabado, 10, 0),\n  sabado_10h30: iso(sabado, 10, 30),\n  daqui_1h: iso(daqui1h, daqui1h.getHours(), daqui1h.getMinutes()),\n  daqui_1h30: iso(daqui1h30, daqui1h30.getHours(), daqui1h30.getMinutes()),\n};\nObject.entries(datas).forEach(([chave, valor]) => insomnia.environment.set(chave, valor));",
+      "afterResponseScript": "insomnia.test('responde 422', () => {\n  insomnia.expect(insomnia.response.code).to.equal(422);\n});"
+    },
+    {
+      "_id": "fld_3924ace01dad4fc392e74790dc66beae",
+      "_type": "request_group",
+      "parentId": "wrk_ca847e5e1fdc41c6a9b89f1ae835553f",
+      "name": "4. Regra 4 - Limite por paciente",
+      "description": "",
+      "environment": {},
+      "metaSortKey": 11
+    },
+    {
+      "_id": "req_f1bbf91325a5401c9b813bbbc4820947",
+      "_type": "request",
+      "parentId": "fld_3924ace01dad4fc392e74790dc66beae",
+      "name": "Mesmo dia, mesmo profissional (422)",
+      "description": "pac-1 já tem consulta com prof-1 nesse dia.",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/appointment",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"professionalId\": \"prof-1\",\n  \"patientId\": \"pac-1\",\n  \"startsAt\": \"{{ _.dia1_15h00 }}\",\n  \"endsAt\": \"{{ _.dia1_15h30 }}\"\n}"
+      },
+      "metaSortKey": 12,
+      "preRequestScript": "// Calcula as datas a partir de \"agora\", para a collection nunca ficar com datas vencidas.\n// Os horários são enviados no fuso local de quem executa (ex.: -03:00).\nconst pad = (n) => String(n).padStart(2, '0');\nconst offset = (date) => {\n  const minutes = -date.getTimezoneOffset();\n  const sign = minutes >= 0 ? '+' : '-';\n  const abs = Math.abs(minutes);\n  return `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;\n};\nconst iso = (day, hour, minute) => {\n  const d = new Date(day);\n  d.setHours(hour, minute, 0, 0);\n  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(hour)}:${pad(minute)}:00${offset(d)}`;\n};\nconst isWeekday = (d) => d.getDay() !== 0 && d.getDay() !== 6;\nconst nextWeekday = (from) => {\n  const d = new Date(from);\n  do { d.setDate(d.getDate() + 1); } while (!isWeekday(d));\n  return d;\n};\n\nconst now = new Date();\n// Pelo menos 2 dias à frente, para também permitir o cancelamento (24h).\nconst tomorrow = new Date(now);\ntomorrow.setDate(tomorrow.getDate() + 1);\nconst dia1 = nextWeekday(tomorrow);\nconst dia2 = nextWeekday(dia1);\nconst dia3 = nextWeekday(dia2);\nconst sabado = new Date(now);\ndo { sabado.setDate(sabado.getDate() + 1); } while (sabado.getDay() !== 6);\nconst daqui1h = new Date(now.getTime() + 60 * 60 * 1000);\nconst daqui1h30 = new Date(now.getTime() + 90 * 60 * 1000);\n\nconst datas = {\n  dia1_10h00: iso(dia1, 10, 0),\n  dia1_10h30: iso(dia1, 10, 30),\n  dia1_15h00: iso(dia1, 15, 0),\n  dia1_15h30: iso(dia1, 15, 30),\n  dia1_17h45: iso(dia1, 17, 45),\n  dia1_18h15: iso(dia1, 18, 15),\n  dia2_10h00: iso(dia2, 10, 0),\n  dia2_10h30: iso(dia2, 10, 30),\n  dia3_10h00: iso(dia3, 10, 0),\n  dia3_10h30: iso(dia3, 10, 30),\n  sabado_10h00: iso(sabado, 10, 0),\n  sabado_10h30: iso(sabado, 10, 30),\n  daqui_1h: iso(daqui1h, daqui1h.getHours(), daqui1h.getMinutes()),\n  daqui_1h30: iso(daqui1h30, daqui1h30.getHours(), daqui1h30.getMinutes()),\n};\nObject.entries(datas).forEach(([chave, valor]) => insomnia.environment.set(chave, valor));",
+      "afterResponseScript": "insomnia.test('responde 422', () => {\n  insomnia.expect(insomnia.response.code).to.equal(422);\n});"
+    },
+    {
+      "_id": "req_c301d74a4ec74143b70258090b84cb0b",
+      "_type": "request",
+      "parentId": "fld_3924ace01dad4fc392e74790dc66beae",
+      "name": "Mesmo dia, outro profissional (201)",
+      "description": "Com outro profissional é permitido. pac-1 passa a ter 2 consultas em aberto.",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/appointment",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"professionalId\": \"prof-4\",\n  \"patientId\": \"pac-1\",\n  \"startsAt\": \"{{ _.dia1_15h00 }}\",\n  \"endsAt\": \"{{ _.dia1_15h30 }}\"\n}"
+      },
+      "metaSortKey": 13,
+      "preRequestScript": "// Calcula as datas a partir de \"agora\", para a collection nunca ficar com datas vencidas.\n// Os horários são enviados no fuso local de quem executa (ex.: -03:00).\nconst pad = (n) => String(n).padStart(2, '0');\nconst offset = (date) => {\n  const minutes = -date.getTimezoneOffset();\n  const sign = minutes >= 0 ? '+' : '-';\n  const abs = Math.abs(minutes);\n  return `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;\n};\nconst iso = (day, hour, minute) => {\n  const d = new Date(day);\n  d.setHours(hour, minute, 0, 0);\n  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(hour)}:${pad(minute)}:00${offset(d)}`;\n};\nconst isWeekday = (d) => d.getDay() !== 0 && d.getDay() !== 6;\nconst nextWeekday = (from) => {\n  const d = new Date(from);\n  do { d.setDate(d.getDate() + 1); } while (!isWeekday(d));\n  return d;\n};\n\nconst now = new Date();\n// Pelo menos 2 dias à frente, para também permitir o cancelamento (24h).\nconst tomorrow = new Date(now);\ntomorrow.setDate(tomorrow.getDate() + 1);\nconst dia1 = nextWeekday(tomorrow);\nconst dia2 = nextWeekday(dia1);\nconst dia3 = nextWeekday(dia2);\nconst sabado = new Date(now);\ndo { sabado.setDate(sabado.getDate() + 1); } while (sabado.getDay() !== 6);\nconst daqui1h = new Date(now.getTime() + 60 * 60 * 1000);\nconst daqui1h30 = new Date(now.getTime() + 90 * 60 * 1000);\n\nconst datas = {\n  dia1_10h00: iso(dia1, 10, 0),\n  dia1_10h30: iso(dia1, 10, 30),\n  dia1_15h00: iso(dia1, 15, 0),\n  dia1_15h30: iso(dia1, 15, 30),\n  dia1_17h45: iso(dia1, 17, 45),\n  dia1_18h15: iso(dia1, 18, 15),\n  dia2_10h00: iso(dia2, 10, 0),\n  dia2_10h30: iso(dia2, 10, 30),\n  dia3_10h00: iso(dia3, 10, 0),\n  dia3_10h30: iso(dia3, 10, 30),\n  sabado_10h00: iso(sabado, 10, 0),\n  sabado_10h30: iso(sabado, 10, 30),\n  daqui_1h: iso(daqui1h, daqui1h.getHours(), daqui1h.getMinutes()),\n  daqui_1h30: iso(daqui1h30, daqui1h30.getHours(), daqui1h30.getMinutes()),\n};\nObject.entries(datas).forEach(([chave, valor]) => insomnia.environment.set(chave, valor));",
+      "afterResponseScript": "insomnia.test('responde 201', () => {\n  insomnia.expect(insomnia.response.code).to.equal(201);\n});"
+    },
+    {
+      "_id": "req_82ac2751282d42d8ac2d67a1bf2ecafa",
+      "_type": "request",
+      "parentId": "fld_3924ace01dad4fc392e74790dc66beae",
+      "name": "3ª consulta em aberto (422)",
+      "description": "pac-1 já tem 2 consultas futuras em aberto.",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/appointment",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"professionalId\": \"prof-5\",\n  \"patientId\": \"pac-1\",\n  \"startsAt\": \"{{ _.dia2_10h00 }}\",\n  \"endsAt\": \"{{ _.dia2_10h30 }}\"\n}"
+      },
+      "metaSortKey": 14,
+      "preRequestScript": "// Calcula as datas a partir de \"agora\", para a collection nunca ficar com datas vencidas.\n// Os horários são enviados no fuso local de quem executa (ex.: -03:00).\nconst pad = (n) => String(n).padStart(2, '0');\nconst offset = (date) => {\n  const minutes = -date.getTimezoneOffset();\n  const sign = minutes >= 0 ? '+' : '-';\n  const abs = Math.abs(minutes);\n  return `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;\n};\nconst iso = (day, hour, minute) => {\n  const d = new Date(day);\n  d.setHours(hour, minute, 0, 0);\n  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(hour)}:${pad(minute)}:00${offset(d)}`;\n};\nconst isWeekday = (d) => d.getDay() !== 0 && d.getDay() !== 6;\nconst nextWeekday = (from) => {\n  const d = new Date(from);\n  do { d.setDate(d.getDate() + 1); } while (!isWeekday(d));\n  return d;\n};\n\nconst now = new Date();\n// Pelo menos 2 dias à frente, para também permitir o cancelamento (24h).\nconst tomorrow = new Date(now);\ntomorrow.setDate(tomorrow.getDate() + 1);\nconst dia1 = nextWeekday(tomorrow);\nconst dia2 = nextWeekday(dia1);\nconst dia3 = nextWeekday(dia2);\nconst sabado = new Date(now);\ndo { sabado.setDate(sabado.getDate() + 1); } while (sabado.getDay() !== 6);\nconst daqui1h = new Date(now.getTime() + 60 * 60 * 1000);\nconst daqui1h30 = new Date(now.getTime() + 90 * 60 * 1000);\n\nconst datas = {\n  dia1_10h00: iso(dia1, 10, 0),\n  dia1_10h30: iso(dia1, 10, 30),\n  dia1_15h00: iso(dia1, 15, 0),\n  dia1_15h30: iso(dia1, 15, 30),\n  dia1_17h45: iso(dia1, 17, 45),\n  dia1_18h15: iso(dia1, 18, 15),\n  dia2_10h00: iso(dia2, 10, 0),\n  dia2_10h30: iso(dia2, 10, 30),\n  dia3_10h00: iso(dia3, 10, 0),\n  dia3_10h30: iso(dia3, 10, 30),\n  sabado_10h00: iso(sabado, 10, 0),\n  sabado_10h30: iso(sabado, 10, 30),\n  daqui_1h: iso(daqui1h, daqui1h.getHours(), daqui1h.getMinutes()),\n  daqui_1h30: iso(daqui1h30, daqui1h30.getHours(), daqui1h30.getMinutes()),\n};\nObject.entries(datas).forEach(([chave, valor]) => insomnia.environment.set(chave, valor));",
+      "afterResponseScript": "insomnia.test('responde 422', () => {\n  insomnia.expect(insomnia.response.code).to.equal(422);\n});"
+    },
+    {
+      "_id": "fld_f4b80fb6c73e4bb3b1e1cb8b938e3eda",
+      "_type": "request_group",
+      "parentId": "wrk_ca847e5e1fdc41c6a9b89f1ae835553f",
+      "name": "5. Regra 3 - Cancelamento",
+      "description": "",
+      "environment": {},
+      "metaSortKey": 15
+    },
+    {
+      "_id": "req_967bc4d40f914886b04622f3efb8a77d",
+      "_type": "request",
+      "parentId": "fld_f4b80fb6c73e4bb3b1e1cb8b938e3eda",
+      "name": "Cancelar consulta (200)",
+      "description": "Cancela a consulta criada em \"Agendar consulta\" (mais de 24h de antecedência).",
+      "method": "PATCH",
+      "url": "{{ _.baseUrl }}/appointment/{{ _.appointmentId }}/cancel",
+      "headers": [],
+      "body": {},
+      "metaSortKey": 16,
+      "preRequestScript": "// Calcula as datas a partir de \"agora\", para a collection nunca ficar com datas vencidas.\n// Os horários são enviados no fuso local de quem executa (ex.: -03:00).\nconst pad = (n) => String(n).padStart(2, '0');\nconst offset = (date) => {\n  const minutes = -date.getTimezoneOffset();\n  const sign = minutes >= 0 ? '+' : '-';\n  const abs = Math.abs(minutes);\n  return `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;\n};\nconst iso = (day, hour, minute) => {\n  const d = new Date(day);\n  d.setHours(hour, minute, 0, 0);\n  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(hour)}:${pad(minute)}:00${offset(d)}`;\n};\nconst isWeekday = (d) => d.getDay() !== 0 && d.getDay() !== 6;\nconst nextWeekday = (from) => {\n  const d = new Date(from);\n  do { d.setDate(d.getDate() + 1); } while (!isWeekday(d));\n  return d;\n};\n\nconst now = new Date();\n// Pelo menos 2 dias à frente, para também permitir o cancelamento (24h).\nconst tomorrow = new Date(now);\ntomorrow.setDate(tomorrow.getDate() + 1);\nconst dia1 = nextWeekday(tomorrow);\nconst dia2 = nextWeekday(dia1);\nconst dia3 = nextWeekday(dia2);\nconst sabado = new Date(now);\ndo { sabado.setDate(sabado.getDate() + 1); } while (sabado.getDay() !== 6);\nconst daqui1h = new Date(now.getTime() + 60 * 60 * 1000);\nconst daqui1h30 = new Date(now.getTime() + 90 * 60 * 1000);\n\nconst datas = {\n  dia1_10h00: iso(dia1, 10, 0),\n  dia1_10h30: iso(dia1, 10, 30),\n  dia1_15h00: iso(dia1, 15, 0),\n  dia1_15h30: iso(dia1, 15, 30),\n  dia1_17h45: iso(dia1, 17, 45),\n  dia1_18h15: iso(dia1, 18, 15),\n  dia2_10h00: iso(dia2, 10, 0),\n  dia2_10h30: iso(dia2, 10, 30),\n  dia3_10h00: iso(dia3, 10, 0),\n  dia3_10h30: iso(dia3, 10, 30),\n  sabado_10h00: iso(sabado, 10, 0),\n  sabado_10h30: iso(sabado, 10, 30),\n  daqui_1h: iso(daqui1h, daqui1h.getHours(), daqui1h.getMinutes()),\n  daqui_1h30: iso(daqui1h30, daqui1h30.getHours(), daqui1h30.getMinutes()),\n};\nObject.entries(datas).forEach(([chave, valor]) => insomnia.environment.set(chave, valor));",
+      "afterResponseScript": "insomnia.test('responde 200', () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});"
+    },
+    {
+      "_id": "req_b49f1fbc1b7849a887660ef699da37fe",
+      "_type": "request",
+      "parentId": "fld_f4b80fb6c73e4bb3b1e1cb8b938e3eda",
+      "name": "Cancelar de novo (409)",
+      "description": "Só consultas agendadas podem ser canceladas.",
+      "method": "PATCH",
+      "url": "{{ _.baseUrl }}/appointment/{{ _.appointmentId }}/cancel",
+      "headers": [],
+      "body": {},
+      "metaSortKey": 17,
+      "preRequestScript": "// Calcula as datas a partir de \"agora\", para a collection nunca ficar com datas vencidas.\n// Os horários são enviados no fuso local de quem executa (ex.: -03:00).\nconst pad = (n) => String(n).padStart(2, '0');\nconst offset = (date) => {\n  const minutes = -date.getTimezoneOffset();\n  const sign = minutes >= 0 ? '+' : '-';\n  const abs = Math.abs(minutes);\n  return `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;\n};\nconst iso = (day, hour, minute) => {\n  const d = new Date(day);\n  d.setHours(hour, minute, 0, 0);\n  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(hour)}:${pad(minute)}:00${offset(d)}`;\n};\nconst isWeekday = (d) => d.getDay() !== 0 && d.getDay() !== 6;\nconst nextWeekday = (from) => {\n  const d = new Date(from);\n  do { d.setDate(d.getDate() + 1); } while (!isWeekday(d));\n  return d;\n};\n\nconst now = new Date();\n// Pelo menos 2 dias à frente, para também permitir o cancelamento (24h).\nconst tomorrow = new Date(now);\ntomorrow.setDate(tomorrow.getDate() + 1);\nconst dia1 = nextWeekday(tomorrow);\nconst dia2 = nextWeekday(dia1);\nconst dia3 = nextWeekday(dia2);\nconst sabado = new Date(now);\ndo { sabado.setDate(sabado.getDate() + 1); } while (sabado.getDay() !== 6);\nconst daqui1h = new Date(now.getTime() + 60 * 60 * 1000);\nconst daqui1h30 = new Date(now.getTime() + 90 * 60 * 1000);\n\nconst datas = {\n  dia1_10h00: iso(dia1, 10, 0),\n  dia1_10h30: iso(dia1, 10, 30),\n  dia1_15h00: iso(dia1, 15, 0),\n  dia1_15h30: iso(dia1, 15, 30),\n  dia1_17h45: iso(dia1, 17, 45),\n  dia1_18h15: iso(dia1, 18, 15),\n  dia2_10h00: iso(dia2, 10, 0),\n  dia2_10h30: iso(dia2, 10, 30),\n  dia3_10h00: iso(dia3, 10, 0),\n  dia3_10h30: iso(dia3, 10, 30),\n  sabado_10h00: iso(sabado, 10, 0),\n  sabado_10h30: iso(sabado, 10, 30),\n  daqui_1h: iso(daqui1h, daqui1h.getHours(), daqui1h.getMinutes()),\n  daqui_1h30: iso(daqui1h30, daqui1h30.getHours(), daqui1h30.getMinutes()),\n};\nObject.entries(datas).forEach(([chave, valor]) => insomnia.environment.set(chave, valor));",
+      "afterResponseScript": "insomnia.test('responde 409', () => {\n  insomnia.expect(insomnia.response.code).to.equal(409);\n});"
+    },
+    {
+      "_id": "req_58df5b2a06d64fe8a0c92a8384e773c9",
+      "_type": "request",
+      "parentId": "fld_f4b80fb6c73e4bb3b1e1cb8b938e3eda",
+      "name": "Consulta inexistente (404)",
+      "description": "Id que não existe.",
+      "method": "PATCH",
+      "url": "{{ _.baseUrl }}/appointment/id-inexistente/cancel",
+      "headers": [],
+      "body": {},
+      "metaSortKey": 18,
+      "preRequestScript": "// Calcula as datas a partir de \"agora\", para a collection nunca ficar com datas vencidas.\n// Os horários são enviados no fuso local de quem executa (ex.: -03:00).\nconst pad = (n) => String(n).padStart(2, '0');\nconst offset = (date) => {\n  const minutes = -date.getTimezoneOffset();\n  const sign = minutes >= 0 ? '+' : '-';\n  const abs = Math.abs(minutes);\n  return `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;\n};\nconst iso = (day, hour, minute) => {\n  const d = new Date(day);\n  d.setHours(hour, minute, 0, 0);\n  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(hour)}:${pad(minute)}:00${offset(d)}`;\n};\nconst isWeekday = (d) => d.getDay() !== 0 && d.getDay() !== 6;\nconst nextWeekday = (from) => {\n  const d = new Date(from);\n  do { d.setDate(d.getDate() + 1); } while (!isWeekday(d));\n  return d;\n};\n\nconst now = new Date();\n// Pelo menos 2 dias à frente, para também permitir o cancelamento (24h).\nconst tomorrow = new Date(now);\ntomorrow.setDate(tomorrow.getDate() + 1);\nconst dia1 = nextWeekday(tomorrow);\nconst dia2 = nextWeekday(dia1);\nconst dia3 = nextWeekday(dia2);\nconst sabado = new Date(now);\ndo { sabado.setDate(sabado.getDate() + 1); } while (sabado.getDay() !== 6);\nconst daqui1h = new Date(now.getTime() + 60 * 60 * 1000);\nconst daqui1h30 = new Date(now.getTime() + 90 * 60 * 1000);\n\nconst datas = {\n  dia1_10h00: iso(dia1, 10, 0),\n  dia1_10h30: iso(dia1, 10, 30),\n  dia1_15h00: iso(dia1, 15, 0),\n  dia1_15h30: iso(dia1, 15, 30),\n  dia1_17h45: iso(dia1, 17, 45),\n  dia1_18h15: iso(dia1, 18, 15),\n  dia2_10h00: iso(dia2, 10, 0),\n  dia2_10h30: iso(dia2, 10, 30),\n  dia3_10h00: iso(dia3, 10, 0),\n  dia3_10h30: iso(dia3, 10, 30),\n  sabado_10h00: iso(sabado, 10, 0),\n  sabado_10h30: iso(sabado, 10, 30),\n  daqui_1h: iso(daqui1h, daqui1h.getHours(), daqui1h.getMinutes()),\n  daqui_1h30: iso(daqui1h30, daqui1h30.getHours(), daqui1h30.getMinutes()),\n};\nObject.entries(datas).forEach(([chave, valor]) => insomnia.environment.set(chave, valor));",
+      "afterResponseScript": "insomnia.test('responde 404', () => {\n  insomnia.expect(insomnia.response.code).to.equal(404);\n});"
+    },
+    {
+      "_id": "req_9d964d7bc8b841d387f35739fb9da03c",
+      "_type": "request",
+      "parentId": "fld_f4b80fb6c73e4bb3b1e1cb8b938e3eda",
+      "name": "Horário cancelado volta a ficar livre (201)",
+      "description": "Outro paciente agenda no horário que foi cancelado.",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/appointment",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"professionalId\": \"prof-1\",\n  \"patientId\": \"pac-6\",\n  \"startsAt\": \"{{ _.dia1_10h00 }}\",\n  \"endsAt\": \"{{ _.dia1_10h30 }}\"\n}"
+      },
+      "metaSortKey": 19,
+      "preRequestScript": "// Calcula as datas a partir de \"agora\", para a collection nunca ficar com datas vencidas.\n// Os horários são enviados no fuso local de quem executa (ex.: -03:00).\nconst pad = (n) => String(n).padStart(2, '0');\nconst offset = (date) => {\n  const minutes = -date.getTimezoneOffset();\n  const sign = minutes >= 0 ? '+' : '-';\n  const abs = Math.abs(minutes);\n  return `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;\n};\nconst iso = (day, hour, minute) => {\n  const d = new Date(day);\n  d.setHours(hour, minute, 0, 0);\n  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(hour)}:${pad(minute)}:00${offset(d)}`;\n};\nconst isWeekday = (d) => d.getDay() !== 0 && d.getDay() !== 6;\nconst nextWeekday = (from) => {\n  const d = new Date(from);\n  do { d.setDate(d.getDate() + 1); } while (!isWeekday(d));\n  return d;\n};\n\nconst now = new Date();\n// Pelo menos 2 dias à frente, para também permitir o cancelamento (24h).\nconst tomorrow = new Date(now);\ntomorrow.setDate(tomorrow.getDate() + 1);\nconst dia1 = nextWeekday(tomorrow);\nconst dia2 = nextWeekday(dia1);\nconst dia3 = nextWeekday(dia2);\nconst sabado = new Date(now);\ndo { sabado.setDate(sabado.getDate() + 1); } while (sabado.getDay() !== 6);\nconst daqui1h = new Date(now.getTime() + 60 * 60 * 1000);\nconst daqui1h30 = new Date(now.getTime() + 90 * 60 * 1000);\n\nconst datas = {\n  dia1_10h00: iso(dia1, 10, 0),\n  dia1_10h30: iso(dia1, 10, 30),\n  dia1_15h00: iso(dia1, 15, 0),\n  dia1_15h30: iso(dia1, 15, 30),\n  dia1_17h45: iso(dia1, 17, 45),\n  dia1_18h15: iso(dia1, 18, 15),\n  dia2_10h00: iso(dia2, 10, 0),\n  dia2_10h30: iso(dia2, 10, 30),\n  dia3_10h00: iso(dia3, 10, 0),\n  dia3_10h30: iso(dia3, 10, 30),\n  sabado_10h00: iso(sabado, 10, 0),\n  sabado_10h30: iso(sabado, 10, 30),\n  daqui_1h: iso(daqui1h, daqui1h.getHours(), daqui1h.getMinutes()),\n  daqui_1h30: iso(daqui1h30, daqui1h30.getHours(), daqui1h30.getMinutes()),\n};\nObject.entries(datas).forEach(([chave, valor]) => insomnia.environment.set(chave, valor));",
+      "afterResponseScript": "insomnia.test('responde 201', () => {\n  insomnia.expect(insomnia.response.code).to.equal(201);\n});"
+    },
+    {
+      "_id": "req_72dfdf04172d461cbd31d44e4eddd870",
+      "_type": "request",
+      "parentId": "fld_f4b80fb6c73e4bb3b1e1cb8b938e3eda",
+      "name": "Cancelamento libera vaga do paciente (201)",
+      "description": "Com uma consulta cancelada, pac-1 volta a ter vaga.",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/appointment",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"professionalId\": \"prof-5\",\n  \"patientId\": \"pac-1\",\n  \"startsAt\": \"{{ _.dia3_10h00 }}\",\n  \"endsAt\": \"{{ _.dia3_10h30 }}\"\n}"
+      },
+      "metaSortKey": 20,
+      "preRequestScript": "// Calcula as datas a partir de \"agora\", para a collection nunca ficar com datas vencidas.\n// Os horários são enviados no fuso local de quem executa (ex.: -03:00).\nconst pad = (n) => String(n).padStart(2, '0');\nconst offset = (date) => {\n  const minutes = -date.getTimezoneOffset();\n  const sign = minutes >= 0 ? '+' : '-';\n  const abs = Math.abs(minutes);\n  return `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;\n};\nconst iso = (day, hour, minute) => {\n  const d = new Date(day);\n  d.setHours(hour, minute, 0, 0);\n  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(hour)}:${pad(minute)}:00${offset(d)}`;\n};\nconst isWeekday = (d) => d.getDay() !== 0 && d.getDay() !== 6;\nconst nextWeekday = (from) => {\n  const d = new Date(from);\n  do { d.setDate(d.getDate() + 1); } while (!isWeekday(d));\n  return d;\n};\n\nconst now = new Date();\n// Pelo menos 2 dias à frente, para também permitir o cancelamento (24h).\nconst tomorrow = new Date(now);\ntomorrow.setDate(tomorrow.getDate() + 1);\nconst dia1 = nextWeekday(tomorrow);\nconst dia2 = nextWeekday(dia1);\nconst dia3 = nextWeekday(dia2);\nconst sabado = new Date(now);\ndo { sabado.setDate(sabado.getDate() + 1); } while (sabado.getDay() !== 6);\nconst daqui1h = new Date(now.getTime() + 60 * 60 * 1000);\nconst daqui1h30 = new Date(now.getTime() + 90 * 60 * 1000);\n\nconst datas = {\n  dia1_10h00: iso(dia1, 10, 0),\n  dia1_10h30: iso(dia1, 10, 30),\n  dia1_15h00: iso(dia1, 15, 0),\n  dia1_15h30: iso(dia1, 15, 30),\n  dia1_17h45: iso(dia1, 17, 45),\n  dia1_18h15: iso(dia1, 18, 15),\n  dia2_10h00: iso(dia2, 10, 0),\n  dia2_10h30: iso(dia2, 10, 30),\n  dia3_10h00: iso(dia3, 10, 0),\n  dia3_10h30: iso(dia3, 10, 30),\n  sabado_10h00: iso(sabado, 10, 0),\n  sabado_10h30: iso(sabado, 10, 30),\n  daqui_1h: iso(daqui1h, daqui1h.getHours(), daqui1h.getMinutes()),\n  daqui_1h30: iso(daqui1h30, daqui1h30.getHours(), daqui1h30.getMinutes()),\n};\nObject.entries(datas).forEach(([chave, valor]) => insomnia.environment.set(chave, valor));",
+      "afterResponseScript": "insomnia.test('responde 201', () => {\n  insomnia.expect(insomnia.response.code).to.equal(201);\n});"
+    }
+  ]
+}
