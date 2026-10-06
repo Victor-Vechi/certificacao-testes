@@ -17,20 +17,16 @@ export class ScheduleAppointmentUseCase {
       input.professionalId,
     );
 
-    if (
-      existing.some(
-        (a) => a.startsAt < input.endsAt && input.startsAt < a.endsAt,
-      )
-    ) {
-      throw new ScheduleConflictException();
-    }
-
     const appointment = new Appointment(
       input.professionalId,
       input.patientId,
       input.startsAt,
       input.endsAt,
     );
+
+    if (existing.some((other) => other.overlaps(appointment))) {
+      throw new ScheduleConflictException();
+    }
 
     await this.repository.save(appointment);
 

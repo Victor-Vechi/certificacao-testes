@@ -5,4 +5,8 @@ export class Appointment {
     readonly startsAt: Date,
     readonly endsAt: Date,
   ) {}
+
+  overlaps(other: Appointment): boolean {
+    return this.startsAt < other.endsAt && other.startsAt < this.endsAt;
+  }
 }
