@@ -6,6 +6,10 @@ import { AppointmentRepository } from '../../../domain/repositories/appointment.
 export class InMemoryAppointmentRepository implements AppointmentRepository {
   private readonly appointments: Appointment[] = [];
 
+  findById(id: string): Promise<Appointment | null> {
+    return Promise.resolve(this.appointments.find((a) => a.id === id) ?? null);
+  }
+
   findByProfessional(professionalId: string): Promise<Appointment[]> {
     return Promise.resolve(
       this.appointments.filter((a) => a.professionalId === professionalId),
