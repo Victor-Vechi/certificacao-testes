@@ -3,6 +3,7 @@ import type { ClockInterface } from '../../shared/domain/clock/clock.interface';
 import { DependencyInjectionEnum } from '../../shared/domain/dependecy-injection/dependency-injection.enum';
 import { Appointment } from '../domain/entities/appointment.entity';
 import type { AppointmentRepository } from '../domain/repositories/appointment.repository';
+import { AppointmentStatus } from '../domain/enums/appointment-status.enum';
 import { MinimumNoticeException } from '../domain/exceptions/minimum-notice.exception';
 import { OutsideBusinessHoursException } from '../domain/exceptions/outside-business-hours.exception';
 import { PatientAppointmentLimitException } from '../domain/exceptions/patient-appointment-limit.exception';
@@ -49,7 +50,11 @@ export class ScheduleAppointmentUseCase
       appointment.patientId,
     );
 
-    if (patientAppointments.length >= 2) {
+    const openAppointments = patientAppointments.filter(
+      (a) => a.status === AppointmentStatus.SCHEDULED,
+    );
+
+    if (openAppointments.length >= 2) {
       throw new PatientAppointmentLimitException();
     }
 
