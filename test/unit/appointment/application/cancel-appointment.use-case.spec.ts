@@ -1,5 +1,6 @@
 import { CancelAppointmentUseCase } from 'src/appointment/application/cancel-appointment.use-case';
 import { Appointment } from 'src/appointment/domain/entities/appointment.entity';
+import { AppointmentNotCancellableException } from 'src/appointment/domain/exceptions/appointment-not-cancellable.exception';
 import { CancellationDeadlineException } from 'src/appointment/domain/exceptions/cancellation-deadline.exception';
 import { AppointmentStatus } from 'src/appointment/domain/enums/appointment-status.enum';
 import { InMemoryAppointmentRepository } from 'src/appointment/infra/persistence/repository/in-memory-appointment.repository';
@@ -41,5 +42,14 @@ describe('CancelAppointmentUseCase', () => {
       useCase.execute({ appointmentId: appointment.id }),
     ).rejects.toThrow(CancellationDeadlineException);
     expect(appointment.status).toBe(AppointmentStatus.SCHEDULED);
+  });
+
+  it('recusa cancelar consulta já cancelada', async () => {
+    now = new Date('2026-10-11T09:00:00');
+    await useCase.execute({ appointmentId: appointment.id });
+
+    await expect(
+      useCase.execute({ appointmentId: appointment.id }),
+    ).rejects.toThrow(AppointmentNotCancellableException);
   });
 });
