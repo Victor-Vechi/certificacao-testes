@@ -5,6 +5,7 @@ import { Appointment } from '../domain/entities/appointment.entity';
 import type { AppointmentRepository } from '../domain/repositories/appointment.repository';
 import { MinimumNoticeException } from '../domain/exceptions/minimum-notice.exception';
 import { OutsideBusinessHoursException } from '../domain/exceptions/outside-business-hours.exception';
+import { PatientAppointmentLimitException } from '../domain/exceptions/patient-appointment-limit.exception';
 import { ScheduleConflictException } from '../domain/exceptions/schedule-conflict.exception';
 import { ScheduleAppointmentInput } from '../domain/interfaces/schedule-appointment-input.interface';
 import { ScheduleAppointmentInterface } from '../domain/interfaces/schedule-appointment.interface';
@@ -42,6 +43,14 @@ export class ScheduleAppointmentUseCase
 
     if (existing.some((other) => other.overlaps(appointment))) {
       throw new ScheduleConflictException();
+    }
+
+    const patientAppointments = await this.repository.findByPatient(
+      appointment.patientId,
+    );
+
+    if (patientAppointments.length >= 2) {
+      throw new PatientAppointmentLimitException();
     }
 
     await this.repository.save(appointment);
