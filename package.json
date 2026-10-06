@@ -12,8 +12,7 @@
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
     "test": "jest",
-    "test:cov": "jest --coverage",
-    "evidencias": "bash scripts/evidencias.sh"
+    "test:cov": "jest --coverage"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
