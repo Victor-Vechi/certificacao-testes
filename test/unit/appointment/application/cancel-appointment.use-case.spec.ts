@@ -78,4 +78,13 @@ describe('CancelAppointmentUseCase', () => {
       useCase.execute({ appointmentId: 'nao-existe' }),
     ).rejects.toThrow(AppointmentNotFoundException);
   });
+
+  it('permite cancelar com exatamente 24h de antecedência', async () => {
+    now = new Date('2026-10-11T10:00:00');
+
+    await useCase.execute({ appointmentId: appointment.id });
+
+    const stored = await repository.findById(appointment.id);
+    expect(stored?.status).toBe(AppointmentStatus.CANCELLED);
+  });
 });
