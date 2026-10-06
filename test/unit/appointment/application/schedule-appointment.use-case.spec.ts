@@ -1,4 +1,5 @@
 import { ScheduleAppointmentUseCase } from 'src/appointment/application/schedule-appointment.use-case';
+import { OutsideBusinessHoursException } from 'src/appointment/domain/exceptions/outside-business-hours.exception';
 import { MinimumNoticeException } from 'src/appointment/domain/exceptions/minimum-notice.exception';
 import { ScheduleConflictException } from 'src/appointment/domain/exceptions/schedule-conflict.exception';
 import { ScheduleAppointmentInput } from 'src/appointment/domain/interfaces/schedule-appointment-input.interface';
@@ -97,5 +98,16 @@ describe('ScheduleAppointmentUseCase', () => {
         }),
       ),
     ).rejects.toThrow(MinimumNoticeException);
+  });
+
+  it('recusa consulta no fim de semana', async () => {
+    await expect(
+      useCase.execute(
+        input({
+          startsAt: new Date('2026-10-10T10:00:00'),
+          endsAt: new Date('2026-10-10T10:30:00'),
+        }),
+      ),
+    ).rejects.toThrow(OutsideBusinessHoursException);
   });
 });
