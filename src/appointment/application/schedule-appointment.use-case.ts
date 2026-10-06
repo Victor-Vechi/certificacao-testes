@@ -1,9 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { ClockInterface } from '../../shared/domain/clock/clock.interface';
 import { DependencyInjectionEnum } from '../../shared/domain/dependecy-injection/dependency-injection.enum';
-import { Appointment } from '../domain/entities/appointment.entity';
+import {
+  Appointment,
+  MAX_OPEN_APPOINTMENTS_PER_PATIENT,
+} from '../domain/entities/appointment.entity';
 import type { AppointmentRepository } from '../domain/repositories/appointment.repository';
-import { AppointmentStatus } from '../domain/enums/appointment-status.enum';
 import { MinimumNoticeException } from '../domain/exceptions/minimum-notice.exception';
 import { OutsideBusinessHoursException } from '../domain/exceptions/outside-business-hours.exception';
 import { PatientAppointmentLimitException } from '../domain/exceptions/patient-appointment-limit.exception';
@@ -51,22 +53,16 @@ export class ScheduleAppointmentUseCase
       appointment.patientId,
     );
 
-    const openAppointments = patientAppointments.filter(
-      (a) =>
-        a.status === AppointmentStatus.SCHEDULED &&
-        a.startsAt > this.clock.now(),
-    );
+    const now = this.clock.now();
+    const openAppointments = patientAppointments.filter((a) => a.isOpenAt(now));
 
-    if (openAppointments.length >= 2) {
+    if (openAppointments.length >= MAX_OPEN_APPOINTMENTS_PER_PATIENT) {
       throw new PatientAppointmentLimitException();
     }
 
     if (
       patientAppointments.some(
-        (a) =>
-          a.status === AppointmentStatus.SCHEDULED &&
-          a.professionalId === appointment.professionalId &&
-          a.startsAt.toDateString() === appointment.startsAt.toDateString(),
+        (a) => a.isScheduled() && a.isSameDayWithSameProfessional(appointment),
       )
     ) {
       throw new SameDayAppointmentException();

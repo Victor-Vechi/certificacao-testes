@@ -9,6 +9,8 @@ const CLOSING_HOUR = 18;
 const SUNDAY = 0;
 const SATURDAY = 6;
 
+export const MAX_OPEN_APPOINTMENTS_PER_PATIENT = 2;
+
 export class Appointment {
   constructor(
     readonly professionalId: string,
@@ -23,8 +25,23 @@ export class Appointment {
     this.status = AppointmentStatus.CANCELLED;
   }
 
-  isCancellable(): boolean {
+  isScheduled(): boolean {
     return this.status === AppointmentStatus.SCHEDULED;
+  }
+
+  isCancellable(): boolean {
+    return this.isScheduled();
+  }
+
+  isOpenAt(now: Date): boolean {
+    return this.isScheduled() && this.startsAt > now;
+  }
+
+  isSameDayWithSameProfessional(other: Appointment): boolean {
+    return (
+      this.professionalId === other.professionalId &&
+      this.startsAt.toDateString() === other.startsAt.toDateString()
+    );
   }
 
   hasCancellationNotice(now: Date): boolean {
