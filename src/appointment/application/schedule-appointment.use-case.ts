@@ -20,7 +20,11 @@ export class ScheduleAppointmentUseCase
   ) {}
 
   async execute(input: ScheduleAppointmentInput): Promise<Appointment> {
-    if (input.startsAt < this.clock.now()) {
+    const minimumStart = new Date(
+      this.clock.now().getTime() + 2 * 60 * 60 * 1000,
+    );
+
+    if (input.startsAt < minimumStart) {
       throw new MinimumNoticeException();
     }
 
