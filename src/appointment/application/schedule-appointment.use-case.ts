@@ -21,40 +21,23 @@ export class ScheduleAppointmentUseCase
   ) {}
 
   async execute(input: ScheduleAppointmentInput): Promise<Appointment> {
-    const minimumStart = new Date(
-      this.clock.now().getTime() + 2 * 60 * 60 * 1000,
-    );
-
-    if (input.startsAt < minimumStart) {
-      throw new MinimumNoticeException();
-    }
-
-    const weekDay = input.startsAt.getDay();
-
-    const openingTime = new Date(input.startsAt);
-    openingTime.setHours(8, 0, 0, 0);
-
-    const closingTime = new Date(input.startsAt);
-    closingTime.setHours(18, 0, 0, 0);
-
-    if (
-      weekDay === 0 ||
-      weekDay === 6 ||
-      input.startsAt < openingTime ||
-      input.endsAt > closingTime
-    ) {
-      throw new OutsideBusinessHoursException();
-    }
-
-    const existing = await this.repository.findByProfessional(
-      input.professionalId,
-    );
-
     const appointment = new Appointment(
       input.professionalId,
       input.patientId,
       input.startsAt,
       input.endsAt,
+    );
+
+    if (!appointment.hasMinimumNotice(this.clock.now())) {
+      throw new MinimumNoticeException();
+    }
+
+    if (!appointment.isWithinBusinessHours()) {
+      throw new OutsideBusinessHoursException();
+    }
+
+    const existing = await this.repository.findByProfessional(
+      appointment.professionalId,
     );
 
     if (existing.some((other) => other.overlaps(appointment))) {
