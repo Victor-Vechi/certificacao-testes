@@ -132,4 +132,28 @@ describe('ScheduleAppointmentUseCase', () => {
       ),
     ).rejects.toThrow(OutsideBusinessHoursException);
   });
+
+  it.each([
+    [
+      'às 08:00, na abertura do expediente',
+      '2026-10-12T08:00:00',
+      '2026-10-12T08:30:00',
+    ],
+    [
+      'terminando às 18:00, no fechamento',
+      '2026-10-12T17:30:00',
+      '2026-10-12T18:00:00',
+    ],
+    [
+      'com exatamente 2h de antecedência',
+      '2026-10-09T11:00:00',
+      '2026-10-09T11:30:00',
+    ],
+  ])('permite consulta %s', async (_, startsAt, endsAt) => {
+    await expect(
+      useCase.execute(
+        input({ startsAt: new Date(startsAt), endsAt: new Date(endsAt) }),
+      ),
+    ).resolves.toBeDefined();
+  });
 });
