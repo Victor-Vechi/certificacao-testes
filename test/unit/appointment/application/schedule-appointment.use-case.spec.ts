@@ -243,4 +243,18 @@ describe('ScheduleAppointmentUseCase', () => {
       ),
     ).rejects.toThrow(SameDayAppointmentException);
   });
+
+  it('permite consulta no mesmo dia com outro profissional', async () => {
+    await useCase.execute(input());
+
+    await expect(
+      useCase.execute(
+        input({
+          professionalId: 'prof-2',
+          startsAt: new Date('2026-10-12T15:00:00'),
+          endsAt: new Date('2026-10-12T15:30:00'),
+        }),
+      ),
+    ).resolves.toBeDefined();
+  });
 });
