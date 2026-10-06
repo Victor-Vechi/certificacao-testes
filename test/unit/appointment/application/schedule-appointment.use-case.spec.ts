@@ -40,4 +40,22 @@ describe('ScheduleAppointmentUseCase', () => {
       }),
     ).rejects.toThrow(ScheduleConflictException);
   });
+
+  it('recusa consulta que sobrepõe parcialmente outra do mesmo profissional', async () => {
+    await useCase.execute({
+      professionalId: 'prof-1',
+      patientId: 'pac-1',
+      startsAt: new Date('2026-10-12T10:00:00'),
+      endsAt: new Date('2026-10-12T10:30:00'),
+    });
+
+    await expect(
+      useCase.execute({
+        professionalId: 'prof-1',
+        patientId: 'pac-2',
+        startsAt: new Date('2026-10-12T10:15:00'),
+        endsAt: new Date('2026-10-12T10:45:00'),
+      }),
+    ).rejects.toThrow(ScheduleConflictException);
+  });
 });
