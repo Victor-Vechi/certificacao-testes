@@ -51,7 +51,9 @@ export class ScheduleAppointmentUseCase
     );
 
     const openAppointments = patientAppointments.filter(
-      (a) => a.status === AppointmentStatus.SCHEDULED,
+      (a) =>
+        a.status === AppointmentStatus.SCHEDULED &&
+        a.startsAt > this.clock.now(),
     );
 
     if (openAppointments.length >= 2) {
