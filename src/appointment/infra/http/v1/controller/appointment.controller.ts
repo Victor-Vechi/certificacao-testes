@@ -16,6 +16,8 @@ import { AppointmentNotFoundException } from '../../../../domain/exceptions/appo
 import { CancellationDeadlineException } from '../../../../domain/exceptions/cancellation-deadline.exception';
 import { MinimumNoticeException } from '../../../../domain/exceptions/minimum-notice.exception';
 import { OutsideBusinessHoursException } from '../../../../domain/exceptions/outside-business-hours.exception';
+import { PatientAppointmentLimitException } from '../../../../domain/exceptions/patient-appointment-limit.exception';
+import { SameDayAppointmentException } from '../../../../domain/exceptions/same-day-appointment.exception';
 import { ScheduleConflictException } from '../../../../domain/exceptions/schedule-conflict.exception';
 import type { CancelAppointmentInterface } from '../../../../domain/interfaces/cancel-appointment.interface';
 import type { ScheduleAppointmentInterface } from '../../../../domain/interfaces/schedule-appointment.interface';
@@ -68,7 +70,9 @@ export class AppointmentController {
     if (
       error instanceof MinimumNoticeException ||
       error instanceof OutsideBusinessHoursException ||
-      error instanceof CancellationDeadlineException
+      error instanceof CancellationDeadlineException ||
+      error instanceof PatientAppointmentLimitException ||
+      error instanceof SameDayAppointmentException
     ) {
       return new UnprocessableEntityException(error.message);
     }
