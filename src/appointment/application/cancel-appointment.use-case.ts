@@ -4,6 +4,7 @@ import { DependencyInjectionEnum } from '../../shared/domain/dependecy-injection
 import { Appointment } from '../domain/entities/appointment.entity';
 import { AppointmentStatus } from '../domain/enums/appointment-status.enum';
 import { AppointmentNotCancellableException } from '../domain/exceptions/appointment-not-cancellable.exception';
+import { AppointmentNotFoundException } from '../domain/exceptions/appointment-not-found.exception';
 import { CancellationDeadlineException } from '../domain/exceptions/cancellation-deadline.exception';
 import { CancelAppointmentInput } from '../domain/interfaces/cancel-appointment-input.interface';
 import { CancelAppointmentInterface } from '../domain/interfaces/cancel-appointment.interface';
@@ -19,9 +20,11 @@ export class CancelAppointmentUseCase implements CancelAppointmentInterface {
   ) {}
 
   async execute(input: CancelAppointmentInput): Promise<Appointment> {
-    const appointment = (await this.repository.findById(
-      input.appointmentId,
-    )) as Appointment;
+    const appointment = await this.repository.findById(input.appointmentId);
+
+    if (!appointment) {
+      throw new AppointmentNotFoundException();
+    }
 
     if (appointment.status !== AppointmentStatus.SCHEDULED) {
       throw new AppointmentNotCancellableException();
