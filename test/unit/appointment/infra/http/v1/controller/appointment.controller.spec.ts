@@ -6,11 +6,13 @@ import { Appointment } from 'src/appointment/domain/entities/appointment.entity'
 import { MinimumNoticeException } from 'src/appointment/domain/exceptions/minimum-notice.exception';
 import { OutsideBusinessHoursException } from 'src/appointment/domain/exceptions/outside-business-hours.exception';
 import { ScheduleConflictException } from 'src/appointment/domain/exceptions/schedule-conflict.exception';
+import { CancelAppointmentInterface } from 'src/appointment/domain/interfaces/cancel-appointment.interface';
 import { ScheduleAppointmentInterface } from 'src/appointment/domain/interfaces/schedule-appointment.interface';
 import { AppointmentController } from 'src/appointment/infra/http/v1/controller/appointment.controller';
 
 describe('AppointmentController', () => {
   let scheduleAppointment: jest.Mocked<ScheduleAppointmentInterface>;
+  let cancelAppointment: jest.Mocked<CancelAppointmentInterface>;
   let controller: AppointmentController;
 
   const body = {
@@ -22,7 +24,11 @@ describe('AppointmentController', () => {
 
   beforeEach(() => {
     scheduleAppointment = { execute: jest.fn() };
-    controller = new AppointmentController(scheduleAppointment);
+    cancelAppointment = { execute: jest.fn() };
+    controller = new AppointmentController(
+      scheduleAppointment,
+      cancelAppointment,
+    );
   });
 
   it('agenda a consulta convertendo as datas do payload', async () => {
@@ -62,5 +68,20 @@ describe('AppointmentController', () => {
     await expect(controller.schedule(body)).rejects.toThrow(
       UnprocessableEntityException,
     );
+  });
+
+  it('cancela a consulta pelo id da rota', async () => {
+    const appointment = new Appointment(
+      'prof-1',
+      'pac-1',
+      new Date(body.startsAt),
+      new Date(body.endsAt),
+    );
+    cancelAppointment.execute.mockResolvedValue(appointment);
+
+    await expect(controller.cancel(appointment.id)).resolves.toBe(appointment);
+    expect(cancelAppointment.execute).toHaveBeenCalledWith({
+      appointmentId: appointment.id,
+    });
   });
 });

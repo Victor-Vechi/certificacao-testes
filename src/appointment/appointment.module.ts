@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { SystemClock } from '../shared/infra/clock/system-clock';
 import { DependencyInjectionEnum } from '../shared/domain/dependecy-injection/dependency-injection.enum';
+import { CancelAppointmentUseCase } from './application/cancel-appointment.use-case';
 import { ScheduleAppointmentUseCase } from './application/schedule-appointment.use-case';
 import { AppointmentController } from './infra/http/v1/controller/appointment.controller';
 import { InMemoryAppointmentRepository } from './infra/persistence/repository/in-memory-appointment.repository';
@@ -12,6 +13,10 @@ import { InMemoryAppointmentRepository } from './infra/persistence/repository/in
     {
       provide: DependencyInjectionEnum.SCHEDULE_APPOINTMENT,
       useClass: ScheduleAppointmentUseCase,
+    },
+    {
+      provide: DependencyInjectionEnum.CANCEL_APPOINTMENT,
+      useClass: CancelAppointmentUseCase,
     },
     {
       provide: DependencyInjectionEnum.APPOINTMENT_REPOSITORY,
