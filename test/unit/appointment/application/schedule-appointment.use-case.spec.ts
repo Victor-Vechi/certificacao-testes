@@ -186,4 +186,25 @@ describe('ScheduleAppointmentUseCase', () => {
       ),
     ).rejects.toThrow(PatientAppointmentLimitException);
   });
+
+  it('permite nova consulta após o paciente cancelar uma das duas', async () => {
+    const first = await useCase.execute(input());
+    await useCase.execute(
+      input({
+        startsAt: new Date('2026-10-13T10:00:00'),
+        endsAt: new Date('2026-10-13T10:30:00'),
+      }),
+    );
+    first.cancel();
+    await repository.save(first);
+
+    await expect(
+      useCase.execute(
+        input({
+          startsAt: new Date('2026-10-14T10:00:00'),
+          endsAt: new Date('2026-10-14T10:30:00'),
+        }),
+      ),
+    ).resolves.toBeDefined();
+  });
 });
