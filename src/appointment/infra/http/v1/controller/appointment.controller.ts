@@ -9,16 +9,11 @@ import {
   Post,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import { BusinessConflictException } from '../../../../../shared/domain/exceptions/business-conflict.exception';
+import { BusinessRuleException } from '../../../../../shared/domain/exceptions/business-rule.exception';
+import { ResourceNotFoundException } from '../../../../../shared/domain/exceptions/resource-not-found.exception';
 import { DependencyInjectionEnum } from '../../../../../shared/domain/dependecy-injection/dependency-injection.enum';
 import { Appointment } from '../../../../domain/entities/appointment.entity';
-import { AppointmentNotCancellableException } from '../../../../domain/exceptions/appointment-not-cancellable.exception';
-import { AppointmentNotFoundException } from '../../../../domain/exceptions/appointment-not-found.exception';
-import { CancellationDeadlineException } from '../../../../domain/exceptions/cancellation-deadline.exception';
-import { MinimumNoticeException } from '../../../../domain/exceptions/minimum-notice.exception';
-import { OutsideBusinessHoursException } from '../../../../domain/exceptions/outside-business-hours.exception';
-import { PatientAppointmentLimitException } from '../../../../domain/exceptions/patient-appointment-limit.exception';
-import { SameDayAppointmentException } from '../../../../domain/exceptions/same-day-appointment.exception';
-import { ScheduleConflictException } from '../../../../domain/exceptions/schedule-conflict.exception';
 import type { CancelAppointmentInterface } from '../../../../domain/interfaces/cancel-appointment.interface';
 import type { ScheduleAppointmentInterface } from '../../../../domain/interfaces/schedule-appointment.interface';
 import { ScheduleAppointmentDto } from '../dto/schedule-appointment.dto';
@@ -56,24 +51,15 @@ export class AppointmentController {
   }
 
   private toHttpException(error: unknown): Error {
-    if (error instanceof AppointmentNotFoundException) {
+    if (error instanceof ResourceNotFoundException) {
       return new NotFoundException(error.message);
     }
 
-    if (
-      error instanceof ScheduleConflictException ||
-      error instanceof AppointmentNotCancellableException
-    ) {
+    if (error instanceof BusinessConflictException) {
       return new ConflictException(error.message);
     }
 
-    if (
-      error instanceof MinimumNoticeException ||
-      error instanceof OutsideBusinessHoursException ||
-      error instanceof CancellationDeadlineException ||
-      error instanceof PatientAppointmentLimitException ||
-      error instanceof SameDayAppointmentException
-    ) {
+    if (error instanceof BusinessRuleException) {
       return new UnprocessableEntityException(error.message);
     }
 
