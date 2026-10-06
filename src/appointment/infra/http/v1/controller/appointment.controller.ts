@@ -3,6 +3,7 @@ import {
   ConflictException,
   Controller,
   Inject,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -10,6 +11,9 @@ import {
 } from '@nestjs/common';
 import { DependencyInjectionEnum } from '../../../../../shared/domain/dependecy-injection/dependency-injection.enum';
 import { Appointment } from '../../../../domain/entities/appointment.entity';
+import { AppointmentNotCancellableException } from '../../../../domain/exceptions/appointment-not-cancellable.exception';
+import { AppointmentNotFoundException } from '../../../../domain/exceptions/appointment-not-found.exception';
+import { CancellationDeadlineException } from '../../../../domain/exceptions/cancellation-deadline.exception';
 import { MinimumNoticeException } from '../../../../domain/exceptions/minimum-notice.exception';
 import { OutsideBusinessHoursException } from '../../../../domain/exceptions/outside-business-hours.exception';
 import { ScheduleConflictException } from '../../../../domain/exceptions/schedule-conflict.exception';
@@ -52,7 +56,23 @@ export class AppointmentController {
   }
 
   @Patch('/appointment/:id/cancel')
-  cancel(@Param('id') id: string): Promise<Appointment> {
-    return this.cancelAppointment.execute({ appointmentId: id });
+  async cancel(@Param('id') id: string): Promise<Appointment> {
+    try {
+      return await this.cancelAppointment.execute({ appointmentId: id });
+    } catch (error) {
+      if (error instanceof AppointmentNotFoundException) {
+        throw new NotFoundException(error.message);
+      }
+
+      if (error instanceof CancellationDeadlineException) {
+        throw new UnprocessableEntityException(error.message);
+      }
+
+      if (error instanceof AppointmentNotCancellableException) {
+        throw new ConflictException(error.message);
+      }
+
+      throw error;
+    }
   }
 }
