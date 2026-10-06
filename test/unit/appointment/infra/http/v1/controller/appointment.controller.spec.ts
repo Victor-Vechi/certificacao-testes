@@ -1,5 +1,10 @@
-import { ConflictException } from '@nestjs/common';
+import {
+  ConflictException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { Appointment } from 'src/appointment/domain/appointment.entity';
+import { MinimumNoticeException } from 'src/appointment/domain/exceptions/minimum-notice.exception';
+import { OutsideBusinessHoursException } from 'src/appointment/domain/exceptions/outside-business-hours.exception';
 import { ScheduleConflictException } from 'src/appointment/domain/exceptions/schedule-conflict.exception';
 import { ScheduleAppointmentInterface } from 'src/appointment/domain/interfaces/schedule-appointment.interface';
 import { AppointmentController } from 'src/appointment/infra/http/v1/controller/appointment.controller';
@@ -46,5 +51,16 @@ describe('AppointmentController', () => {
     );
 
     await expect(controller.schedule(body)).rejects.toThrow(ConflictException);
+  });
+
+  it.each([
+    ['antecedência mínima', new MinimumNoticeException()],
+    ['horário comercial', new OutsideBusinessHoursException()],
+  ])('responde 422 quando viola a regra de %s', async (_, error) => {
+    scheduleAppointment.execute.mockRejectedValue(error);
+
+    await expect(controller.schedule(body)).rejects.toThrow(
+      UnprocessableEntityException,
+    );
   });
 });
