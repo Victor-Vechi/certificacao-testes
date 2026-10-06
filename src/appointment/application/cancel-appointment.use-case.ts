@@ -23,7 +23,7 @@ export class CancelAppointmentUseCase implements CancelAppointmentInterface {
       input.appointmentId,
     )) as Appointment;
 
-    if (appointment.status === AppointmentStatus.CANCELLED) {
+    if (appointment.status !== AppointmentStatus.SCHEDULED) {
       throw new AppointmentNotCancellableException();
     }
 
