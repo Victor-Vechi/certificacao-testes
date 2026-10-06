@@ -1,4 +1,5 @@
 import { ScheduleAppointmentUseCase } from 'src/appointment/application/schedule-appointment.use-case';
+import { Appointment } from 'src/appointment/domain/entities/appointment.entity';
 import { OutsideBusinessHoursException } from 'src/appointment/domain/exceptions/outside-business-hours.exception';
 import { MinimumNoticeException } from 'src/appointment/domain/exceptions/minimum-notice.exception';
 import { PatientAppointmentLimitException } from 'src/appointment/domain/exceptions/patient-appointment-limit.exception';
@@ -206,5 +207,26 @@ describe('ScheduleAppointmentUseCase', () => {
         }),
       ),
     ).resolves.toBeDefined();
+  });
+
+  it('não conta consultas passadas no limite do paciente', async () => {
+    await repository.save(
+      new Appointment(
+        'prof-1',
+        'pac-1',
+        new Date('2026-10-07T10:00:00'),
+        new Date('2026-10-07T10:30:00'),
+      ),
+    );
+    await repository.save(
+      new Appointment(
+        'prof-1',
+        'pac-1',
+        new Date('2026-10-08T10:00:00'),
+        new Date('2026-10-08T10:30:00'),
+      ),
+    );
+
+    await expect(useCase.execute(input())).resolves.toBeDefined();
   });
 });
