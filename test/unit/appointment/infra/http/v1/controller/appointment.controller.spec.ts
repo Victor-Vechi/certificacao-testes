@@ -1,4 +1,6 @@
+import { ConflictException } from '@nestjs/common';
 import { Appointment } from 'src/appointment/domain/appointment.entity';
+import { ScheduleConflictException } from 'src/appointment/domain/exceptions/schedule-conflict.exception';
 import { ScheduleAppointmentInterface } from 'src/appointment/domain/interfaces/schedule-appointment.interface';
 import { AppointmentController } from 'src/appointment/infra/http/v1/controller/appointment.controller';
 
@@ -36,5 +38,13 @@ describe('AppointmentController', () => {
       endsAt: new Date(body.endsAt),
     });
     expect(result).toBe(appointment);
+  });
+
+  it('responde 409 quando há conflito de horário', async () => {
+    scheduleAppointment.execute.mockRejectedValue(
+      new ScheduleConflictException(),
+    );
+
+    await expect(controller.schedule(body)).rejects.toThrow(ConflictException);
   });
 });
