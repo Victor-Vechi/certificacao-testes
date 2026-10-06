@@ -34,6 +34,16 @@ describe('ScheduleAppointmentUseCase', () => {
     expect(await repository.findByProfessional('prof-1')).toHaveLength(1);
   });
 
+  it('gera um id único para cada consulta agendada', async () => {
+    const first = await useCase.execute(input());
+    const second = await useCase.execute(
+      input({ professionalId: 'prof-2', patientId: 'pac-2' }),
+    );
+
+    expect(first.id).toEqual(expect.any(String));
+    expect(first.id).not.toBe(second.id);
+  });
+
   it('recusa consulta no mesmo horário de outra do mesmo profissional', async () => {
     await useCase.execute(input());
 
