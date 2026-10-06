@@ -1,8 +1,12 @@
 import {
   ConflictException,
+  NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { Appointment } from 'src/appointment/domain/entities/appointment.entity';
+import { AppointmentNotCancellableException } from 'src/appointment/domain/exceptions/appointment-not-cancellable.exception';
+import { AppointmentNotFoundException } from 'src/appointment/domain/exceptions/appointment-not-found.exception';
+import { CancellationDeadlineException } from 'src/appointment/domain/exceptions/cancellation-deadline.exception';
 import { MinimumNoticeException } from 'src/appointment/domain/exceptions/minimum-notice.exception';
 import { OutsideBusinessHoursException } from 'src/appointment/domain/exceptions/outside-business-hours.exception';
 import { ScheduleConflictException } from 'src/appointment/domain/exceptions/schedule-conflict.exception';
@@ -84,4 +88,34 @@ describe('AppointmentController', () => {
       appointmentId: appointment.id,
     });
   });
+
+  it.each([
+    [
+      '404',
+      'consulta inexistente',
+      new AppointmentNotFoundException(),
+      NotFoundException,
+    ],
+    [
+      '422',
+      'fora do prazo',
+      new CancellationDeadlineException(),
+      UnprocessableEntityException,
+    ],
+    [
+      '409',
+      'consulta não agendada',
+      new AppointmentNotCancellableException(),
+      ConflictException,
+    ],
+  ])(
+    'responde %s ao cancelar %s',
+    async (_status, _case, error, httpException) => {
+      cancelAppointment.execute.mockRejectedValue(error);
+
+      await expect(controller.cancel('consulta-1')).rejects.toThrow(
+        httpException,
+      );
+    },
+  );
 });
