@@ -52,4 +52,26 @@ describe('ScheduleAppointmentUseCase', () => {
       ),
     ).rejects.toThrow(ScheduleConflictException);
   });
+
+  it('permite consulta que começa exatamente quando a anterior termina', async () => {
+    await useCase.execute(input());
+
+    await expect(
+      useCase.execute(
+        input({
+          patientId: 'pac-2',
+          startsAt: new Date('2026-10-12T10:30:00'),
+          endsAt: new Date('2026-10-12T11:00:00'),
+        }),
+      ),
+    ).resolves.toBeDefined();
+  });
+
+  it('permite o mesmo horário para profissionais diferentes', async () => {
+    await useCase.execute(input());
+
+    await expect(
+      useCase.execute(input({ professionalId: 'prof-2', patientId: 'pac-2' })),
+    ).resolves.toBeDefined();
+  });
 });
