@@ -1,16 +1,19 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { DependencyInjectionEnum } from '../../shared/domain/dependecy-injection/dependency-injection.enum';
 import { Appointment } from '../domain/appointment.entity';
-import { AppointmentRepository } from '../domain/appointment.repository';
+import type { AppointmentRepository } from '../domain/appointment.repository';
 import { ScheduleConflictException } from '../domain/exceptions/schedule-conflict.exception';
+import { ScheduleAppointmentInput } from '../domain/interfaces/schedule-appointment-input.interface';
+import { ScheduleAppointmentInterface } from '../domain/interfaces/schedule-appointment.interface';
 
-export interface ScheduleAppointmentInput {
-  professionalId: string;
-  patientId: string;
-  startsAt: Date;
-  endsAt: Date;
-}
-
-export class ScheduleAppointmentUseCase {
-  constructor(private readonly repository: AppointmentRepository) {}
+@Injectable()
+export class ScheduleAppointmentUseCase
+  implements ScheduleAppointmentInterface
+{
+  constructor(
+    @Inject(DependencyInjectionEnum.APPOINTMENT_REPOSITORY)
+    private readonly repository: AppointmentRepository,
+  ) {}
 
   async execute(input: ScheduleAppointmentInput): Promise<Appointment> {
     const existing = await this.repository.findByProfessional(

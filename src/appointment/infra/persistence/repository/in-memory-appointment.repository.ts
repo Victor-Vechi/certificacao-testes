@@ -1,6 +1,8 @@
+import { Injectable } from '@nestjs/common';
 import { Appointment } from '../../../domain/appointment.entity';
 import { AppointmentRepository } from '../../../domain/appointment.repository';
 
+@Injectable()
 export class InMemoryAppointmentRepository implements AppointmentRepository {
   private readonly appointments: Appointment[] = [];
 

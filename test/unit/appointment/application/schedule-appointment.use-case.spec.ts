@@ -1,8 +1,6 @@
-import {
-  ScheduleAppointmentInput,
-  ScheduleAppointmentUseCase,
-} from 'src/appointment/application/schedule-appointment.use-case';
+import { ScheduleAppointmentUseCase } from 'src/appointment/application/schedule-appointment.use-case';
 import { ScheduleConflictException } from 'src/appointment/domain/exceptions/schedule-conflict.exception';
+import { ScheduleAppointmentInput } from 'src/appointment/domain/interfaces/schedule-appointment-input.interface';
 import { InMemoryAppointmentRepository } from 'src/appointment/infra/persistence/repository/in-memory-appointment.repository';
 
 describe('ScheduleAppointmentUseCase', () => {
