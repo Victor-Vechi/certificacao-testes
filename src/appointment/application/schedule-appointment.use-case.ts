@@ -4,6 +4,7 @@ import { DependencyInjectionEnum } from '../../shared/domain/dependecy-injection
 import { Appointment } from '../domain/appointment.entity';
 import type { AppointmentRepository } from '../domain/appointment.repository';
 import { MinimumNoticeException } from '../domain/exceptions/minimum-notice.exception';
+import { OutsideBusinessHoursException } from '../domain/exceptions/outside-business-hours.exception';
 import { ScheduleConflictException } from '../domain/exceptions/schedule-conflict.exception';
 import { ScheduleAppointmentInput } from '../domain/interfaces/schedule-appointment-input.interface';
 import { ScheduleAppointmentInterface } from '../domain/interfaces/schedule-appointment.interface';
@@ -26,6 +27,12 @@ export class ScheduleAppointmentUseCase
 
     if (input.startsAt < minimumStart) {
       throw new MinimumNoticeException();
+    }
+
+    const weekDay = input.startsAt.getDay();
+
+    if (weekDay === 0 || weekDay === 6) {
+      throw new OutsideBusinessHoursException();
     }
 
     const existing = await this.repository.findByProfessional(
