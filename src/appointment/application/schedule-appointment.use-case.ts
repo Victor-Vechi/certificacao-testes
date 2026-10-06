@@ -64,6 +64,7 @@ export class ScheduleAppointmentUseCase
     if (
       patientAppointments.some(
         (a) =>
+          a.professionalId === appointment.professionalId &&
           a.startsAt.toDateString() === appointment.startsAt.toDateString(),
       )
     ) {
