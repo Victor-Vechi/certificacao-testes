@@ -40,18 +40,7 @@ export class AppointmentController {
         endsAt: new Date(body.endsAt),
       });
     } catch (error) {
-      if (error instanceof ScheduleConflictException) {
-        throw new ConflictException(error.message);
-      }
-
-      if (
-        error instanceof MinimumNoticeException ||
-        error instanceof OutsideBusinessHoursException
-      ) {
-        throw new UnprocessableEntityException(error.message);
-      }
-
-      throw error;
+      throw this.toHttpException(error);
     }
   }
 
@@ -60,19 +49,30 @@ export class AppointmentController {
     try {
       return await this.cancelAppointment.execute({ appointmentId: id });
     } catch (error) {
-      if (error instanceof AppointmentNotFoundException) {
-        throw new NotFoundException(error.message);
-      }
-
-      if (error instanceof CancellationDeadlineException) {
-        throw new UnprocessableEntityException(error.message);
-      }
-
-      if (error instanceof AppointmentNotCancellableException) {
-        throw new ConflictException(error.message);
-      }
-
-      throw error;
+      throw this.toHttpException(error);
     }
+  }
+
+  private toHttpException(error: unknown): Error {
+    if (error instanceof AppointmentNotFoundException) {
+      return new NotFoundException(error.message);
+    }
+
+    if (
+      error instanceof ScheduleConflictException ||
+      error instanceof AppointmentNotCancellableException
+    ) {
+      return new ConflictException(error.message);
+    }
+
+    if (
+      error instanceof MinimumNoticeException ||
+      error instanceof OutsideBusinessHoursException ||
+      error instanceof CancellationDeadlineException
+    ) {
+      return new UnprocessableEntityException(error.message);
+    }
+
+    return error as Error;
   }
 }
